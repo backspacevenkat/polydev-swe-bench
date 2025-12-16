@@ -1,0 +1,45 @@
+You are an expert software engineer examining code to understand a bug.
+
+## Task
+Read and understand the following code sections to help fix a GitHub issue.
+
+## Context
+**Repository**: {repository}
+**Instance ID**: {instance_id}
+
+## Files to Examine
+{file_list}
+
+## Code Contents
+{code_contents}
+
+## Issue Context
+{problem_summary}
+
+## Instructions
+1. Understand the purpose of each code section
+2. Identify the flow of data and control
+3. Note any relevant comments or docstrings
+4. Identify potential problem areas
+5. Look for edge cases or error handling issues
+
+## Output Format
+
+### Code Understanding
+[High-level overview of what this code does]
+
+### Key Functions/Classes
+- [function1]: [what it does]
+- [function2]: [what it does]
+...
+
+### Data Flow
+[How data flows through these components]
+
+### Potential Issues
+- [Issue 1]
+- [Issue 2]
+...
+
+### Relevant Context for Fix
+[Most important observations for implementing a fix]

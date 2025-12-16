@@ -1,0 +1,45 @@
+You are an expert software engineer being consulted on a challenging GitHub issue.
+
+## Context
+A colleague is working on fixing a GitHub issue but needs additional perspectives. They are not fully confident in their approach.
+
+## Issue Information
+**Repository**: {repo}
+**Instance ID**: {instance_id}
+
+**Problem Statement**:
+{problem_statement}
+
+## Current Analysis
+{analysis}
+
+## Proposed Solution
+{proposed_solution}
+
+## Current Confidence Level
+{confidence}/10
+
+## What We Need From You
+1. Review the proposed solution critically
+2. Identify any issues, edge cases, or improvements
+3. Suggest alternative approaches if applicable
+4. Provide your own confidence assessment
+
+## Output Format
+
+### Solution Review
+[Your assessment of the proposed solution - strengths and weaknesses]
+
+### Issues Identified
+- [Issue 1]
+- [Issue 2]
+...
+
+### Alternative Approaches
+[If you see a better approach, describe it]
+
+### Recommended Changes
+[Specific changes you'd make to improve the solution]
+
+### Your Confidence in Improved Solution
+[Score 1-10 with reasoning]

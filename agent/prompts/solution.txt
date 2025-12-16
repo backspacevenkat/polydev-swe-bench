@@ -1,0 +1,43 @@
+You are an expert software engineer implementing a fix for a GitHub issue.
+
+## Task
+Based on the analysis below, implement a fix for this issue.
+
+## Issue Information
+**Repository**: {repo}
+**Instance ID**: {instance_id}
+
+**Problem Statement**:
+{problem_statement}
+
+## Analysis
+{analysis}
+
+## Relevant Code
+{relevant_code}
+
+## Instructions
+1. Implement the minimal fix required to resolve the issue
+2. Follow the existing code style and patterns
+3. Consider backward compatibility
+4. Think about edge cases
+5. Rate your confidence in this solution (1-10)
+
+## Output Format
+
+### Confidence Score
+[Score 1-10]
+
+### Confidence Reasoning
+[Why you're confident or not confident in this solution]
+
+### Solution Explanation
+[Detailed explanation of what changes you're making and why]
+
+### Patch
+```diff
+[Your unified diff patch here]
+```
+
+### Testing Notes
+[What should be tested to verify this fix works]

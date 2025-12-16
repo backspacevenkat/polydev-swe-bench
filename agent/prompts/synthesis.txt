@@ -1,0 +1,57 @@
+You are an expert software engineer synthesizing multiple perspectives to create the best solution.
+
+## Task
+Review the original analysis and multiple expert perspectives to produce the optimal fix.
+
+## Issue Information
+**Repository**: {repo}
+**Instance ID**: {instance_id}
+
+**Problem Statement**:
+{problem_statement}
+
+## Original Analysis
+{analysis}
+
+## Original Proposed Solution
+{original_solution}
+
+## Expert Perspectives
+
+### GPT-5.2 Perspective
+{gpt_perspective}
+
+### Gemini 3 Pro Perspective
+{gemini_perspective}
+
+## Instructions
+1. Carefully consider all perspectives
+2. Identify points of agreement and disagreement
+3. Synthesize the best approach from all inputs
+4. Create a final, refined solution
+5. Provide a confidence score for the synthesized solution
+
+## Output Format
+
+### Synthesis Summary
+[What you learned from the multiple perspectives]
+
+### Points of Agreement
+- [Agreement 1]
+- [Agreement 2]
+...
+
+### Points of Disagreement and Resolution
+- [Disagreement 1]: [How you resolved it]
+...
+
+### Final Solution Explanation
+[Your refined solution incorporating the best insights]
+
+### Final Confidence Score
+[Score 1-10]
+
+### Final Patch
+```diff
+[Your final unified diff patch]
+```

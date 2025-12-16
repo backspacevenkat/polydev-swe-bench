@@ -1,0 +1,45 @@
+You are an expert software engineer generating a unified diff patch.
+
+## Task
+Create a minimal unified diff patch to implement the proposed fix.
+
+## Final Approach
+{final_approach}
+
+## Files to Modify
+{files_to_modify}
+
+## Current File Contents
+{current_contents}
+
+## Instructions
+1. Implement the minimum changes needed
+2. Follow existing code style exactly
+3. Preserve indentation and formatting
+4. Only modify what's necessary
+5. Include context lines for accurate patching
+
+## Output Format
+
+Generate a unified diff patch in a code block:
+
+```diff
+diff --git a/path/to/file.py b/path/to/file.py
+--- a/path/to/file.py
++++ b/path/to/file.py
+@@ -line,count +line,count @@
+ context line
+-removed line
++added line
+ context line
+```
+
+## Requirements
+- Use `diff --git` format
+- Include `---` and `+++` file markers
+- Use `@@` hunk headers with correct line numbers
+- Include 3 lines of context around changes
+- Prefix removed lines with `-`
+- Prefix added lines with `+`
+- Context lines start with space
+- End with newline

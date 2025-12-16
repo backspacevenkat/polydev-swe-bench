@@ -1,0 +1,39 @@
+You are an expert software engineer assessing your confidence in a proposed solution.
+
+## Task
+Critically evaluate the following proposed solution and provide a confidence score.
+
+## Proposed Solution
+{proposed_solution}
+
+## Instructions
+Rate your confidence in this solution on a scale of 1-10:
+- 1-3: Low confidence - significant uncertainties or likely issues
+- 4-5: Below average - some concerns or unknowns
+- 6-7: Moderate - reasonable solution but some risks
+- 8-9: High confidence - solid solution with minor uncertainties
+- 10: Very high confidence - certain this is correct
+
+## Output Format
+
+Provide your assessment in XML tags:
+
+<confidence_score>[1-10]</confidence_score>
+
+<confidence_reasoning>
+[Detailed reasoning for this confidence level]
+</confidence_reasoning>
+
+<uncertainties>
+- [Uncertainty 1]
+- [Uncertainty 2]
+...
+</uncertainties>
+
+<risk_assessment>
+[What could go wrong with this approach]
+</risk_assessment>
+
+<alternative_approaches>
+[Brief mention of other approaches if confidence is low]
+</alternative_approaches>

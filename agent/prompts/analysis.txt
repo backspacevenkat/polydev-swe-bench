@@ -1,0 +1,45 @@
+You are an expert software engineer analyzing a GitHub issue to prepare a fix.
+
+## Task
+Analyze the following GitHub issue and repository context to understand what needs to be fixed.
+
+## Issue Information
+**Repository**: {repo}
+**Instance ID**: {instance_id}
+
+**Issue Description**:
+{problem_statement}
+
+## Repository Context
+{repo_context}
+
+## Instructions
+1. Carefully read the issue description
+2. Identify the specific bug, feature request, or problem being reported
+3. List the key symptoms or expected vs actual behavior
+4. Identify which files are likely involved
+5. Consider edge cases and potential root causes
+
+## Output Format
+Provide your analysis in the following structure:
+
+### Problem Summary
+[1-2 sentence summary of the core issue]
+
+### Key Symptoms
+- [Symptom 1]
+- [Symptom 2]
+...
+
+### Likely Affected Files
+- [file1.py]: [reason]
+- [file2.py]: [reason]
+...
+
+### Potential Root Causes
+1. [Most likely cause]
+2. [Alternative cause]
+...
+
+### Recommended Approach
+[Brief description of how to fix this]
