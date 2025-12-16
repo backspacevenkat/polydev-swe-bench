@@ -90,13 +90,22 @@ mkdir -p logs
 echo ""
 echo "Checking SWE-bench Verified dataset..."
 if [ ! -f "data/swe-bench-verified/tasks.json" ]; then
-    echo "Downloading dataset..."
+    echo "Downloading dataset from HuggingFace..."
     python3 -c "
-from swebench import get_eval_refs
+from datasets import load_dataset
 import json
-tasks = get_eval_refs('verified')
-with open('data/swe-bench-verified/tasks.json', 'w') as f:
+from pathlib import Path
+
+print('Loading SWE-bench Verified...')
+dataset = load_dataset('princeton-nlp/SWE-bench_Verified', split='test')
+tasks = [dict(task) for task in dataset]
+
+data_dir = Path('data/swe-bench-verified')
+data_dir.mkdir(parents=True, exist_ok=True)
+
+with open(data_dir / 'tasks.json', 'w') as f:
     json.dump(tasks, f, indent=2)
+
 print(f'Downloaded {len(tasks)} tasks')
 "
 else

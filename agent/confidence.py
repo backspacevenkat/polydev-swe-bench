@@ -34,7 +34,8 @@ class ConfidenceAssessor:
         self.patterns = [
             # XML-style tags
             r"<score>(\d+)</score>",
-            r"<confidence.*?>(\d+)</confidence>",
+            r"<confidence_score>(\d+)</confidence_score>",
+            r"<confidence.*?>(\d+)</confidence.*?>",
 
             # Natural language patterns
             r"confidence[:\s]+(\d+)\s*/\s*10",

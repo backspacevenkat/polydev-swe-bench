@@ -50,7 +50,7 @@ def load_swebench_tasks(
     Returns:
         List of task dictionaries
     """
-    # Try to load from local data directory
+    # Try to load from local data directory first
     data_dir = Path(__file__).parent.parent / "data" / f"swe-bench-{dataset}"
     tasks_file = data_dir / "tasks.json"
 
@@ -59,21 +59,36 @@ def load_swebench_tasks(
         with open(tasks_file) as f:
             all_tasks = json.load(f)
     else:
-        # Try to load from SWE-bench package
-        logger.info("Loading tasks from SWE-bench package")
+        # Load from HuggingFace datasets
+        logger.info("Loading tasks from HuggingFace datasets...")
         try:
-            from swebench import get_eval_refs
-            all_tasks = get_eval_refs(dataset)
+            from datasets import load_dataset
+            
+            dataset_name = "princeton-nlp/SWE-bench_Verified" if dataset == "verified" else "princeton-nlp/SWE-bench"
+            hf_dataset = load_dataset(dataset_name, split="test")
+            
+            # Convert to list of dicts
+            all_tasks = [dict(task) for task in hf_dataset]
+            
+            # Save locally for future use
+            data_dir.mkdir(parents=True, exist_ok=True)
+            with open(tasks_file, 'w') as f:
+                json.dump(all_tasks, f, indent=2)
+            logger.info(f"Saved {len(all_tasks)} tasks to {tasks_file}")
+            
         except ImportError:
             logger.error(
-                "SWE-bench not installed and no local data found. "
-                "Run: pip install swebench"
+                "datasets package not installed. "
+                "Run: pip install datasets"
             )
+            sys.exit(1)
+        except Exception as e:
+            logger.error(f"Failed to load dataset: {e}")
             sys.exit(1)
 
     # Select subset
     tasks = all_tasks[:num_tasks]
-    logger.info(f"Loaded {len(tasks)} tasks")
+    logger.info(f"Selected {len(tasks)} tasks for evaluation")
 
     return tasks
 

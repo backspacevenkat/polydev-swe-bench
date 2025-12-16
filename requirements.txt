@@ -7,9 +7,9 @@ pyyaml>=6.0.1
 requests>=2.31.0
 tqdm>=4.66.0
 
-# SWE-bench
-# Install separately: pip install swebench
-# swebench>=1.0.0
+# SWE-bench and datasets
+swebench>=4.0.0
+datasets>=2.0.0
 
 # Data processing
 pandas>=2.0.0

@@ -121,8 +121,9 @@ class PolydevAgent:
         consultation_enabled: bool = True,
         confidence_threshold: int = 8,
         max_retries: int = 3,
-        timeout_seconds: int = 120,
-        log_dir: Optional[Path] = None
+        timeout_seconds: int = 600,  # 10 minutes for complex SWE-bench tasks
+        log_dir: Optional[Path] = None,
+        mock_mode: bool = False  # For testing without actual API calls
     ):
         """
         Initialize the agent.
@@ -131,14 +132,16 @@ class PolydevAgent:
             consultation_enabled: Whether to use Polydev MCP consultation
             confidence_threshold: Consult if confidence < threshold
             max_retries: Number of retries on model failures
-            timeout_seconds: Timeout for model calls
+            timeout_seconds: Timeout for model calls (default: 600s for complex tasks)
             log_dir: Directory for detailed logs
+            mock_mode: If True, return simulated responses (for testing)
         """
         self.consultation_enabled = consultation_enabled
         self.confidence_threshold = confidence_threshold
         self.max_retries = max_retries
         self.timeout_seconds = timeout_seconds
         self.log_dir = log_dir
+        self.mock_mode = mock_mode
 
         # Components
         self.confidence_assessor = ConfidenceAssessor()
@@ -415,6 +418,10 @@ class PolydevAgent:
 
     def _call_claude(self, prompt: str) -> str:
         """Call Claude via Claude Code CLI."""
+        # Mock mode for testing
+        if self.mock_mode:
+            return self._generate_mock_response(prompt)
+
         for attempt in range(self.max_retries):
             try:
                 result = subprocess.run(
@@ -440,6 +447,72 @@ class PolydevAgent:
                 time.sleep(2 ** attempt)  # Exponential backoff
 
         raise RuntimeError(f"Claude CLI failed after {self.max_retries} attempts")
+
+    def _generate_mock_response(self, prompt: str) -> str:
+        """Generate a mock response for testing."""
+        import random
+
+        # Determine what type of response is needed based on prompt content
+        if "analyze" in prompt.lower() or "analysis" in prompt.lower():
+            return """
+<root_cause>Mock root cause: The issue appears to be in the model handling logic.</root_cause>
+<affected_files>
+- src/model.py: Main model file
+- src/utils.py: Utility functions
+</affected_files>
+<expected_behavior>The function should return correct results.</expected_behavior>
+<actual_behavior>The function returns incorrect results in edge cases.</actual_behavior>
+<edge_cases>
+- Empty input
+- Large numbers
+</edge_cases>
+"""
+        elif "confidence" in prompt.lower():
+            score = random.randint(5, 9)  # Random confidence to test consultation
+            return f"""
+<confidence_score>{score}</confidence_score>
+<confidence_reasoning>Mock reasoning: The solution appears reasonable but has some edge cases.</confidence_reasoning>
+<uncertainties>
+- Edge case handling
+- Performance implications
+</uncertainties>
+"""
+        elif "solution" in prompt.lower():
+            return """
+### Solution Explanation
+Mock solution: Fix the bug by updating the logic in the affected function.
+
+### Patch
+```diff
+diff --git a/src/model.py b/src/model.py
+--- a/src/model.py
++++ b/src/model.py
+@@ -10,7 +10,7 @@
+ def process_data(data):
+-    return data
++    return data if data else []
+```
+"""
+        elif "synthesis" in prompt.lower():
+            return """
+<approach>Mock synthesized approach: After considering multiple perspectives,
+the best fix is to add proper validation.</approach>
+<new_confidence>8</new_confidence>
+"""
+        elif "patch" in prompt.lower():
+            return """
+```diff
+diff --git a/src/model.py b/src/model.py
+--- a/src/model.py
++++ b/src/model.py
+@@ -10,7 +10,7 @@
+ def process_data(data):
+-    return data
++    return data if data else []
+```
+"""
+        else:
+            return "Mock response for prompt."
 
     def _parse_analysis(self, response: str) -> Analysis:
         """Parse analysis from Claude response."""
