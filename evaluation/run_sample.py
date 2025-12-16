@@ -25,7 +25,7 @@ from typing import List, Dict, Any
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from agent import PolydevAgent
+from agent import PolydevAgent, ProgressMonitor
 
 # Configure logging
 logging.basicConfig(
@@ -97,7 +97,8 @@ def run_evaluation(
     tasks: List[Dict[str, Any]],
     mode: str,
     output_dir: Path,
-    verbose: bool = False
+    verbose: bool = False,
+    mock_mode: bool = False
 ) -> Dict[str, Any]:
     """
     Run evaluation on tasks.
@@ -107,6 +108,7 @@ def run_evaluation(
         mode: 'baseline' or 'polydev'
         output_dir: Directory for output
         verbose: Enable verbose logging
+        mock_mode: Use mock responses for testing
 
     Returns:
         Results dictionary
@@ -114,12 +116,17 @@ def run_evaluation(
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
+    # Create progress monitor
+    monitor = ProgressMonitor(output_dir, use_rich=True)
+    monitor.start_evaluation(mode, len(tasks))
+
     # Create agent
     consultation_enabled = mode == "polydev"
     agent = PolydevAgent(
         consultation_enabled=consultation_enabled,
         confidence_threshold=8,
-        log_dir=output_dir
+        log_dir=output_dir,
+        mock_mode=mock_mode
     )
 
     logger.info(
@@ -131,9 +138,8 @@ def run_evaluation(
     start_time = time.time()
 
     for i, task in enumerate(tasks):
-        logger.info(
-            f"[{i+1}/{len(tasks)}] Processing {task['instance_id']}"
-        )
+        instance_id = task['instance_id']
+        monitor.start_task(instance_id)
 
         try:
             result = agent.solve_task(task)
@@ -150,19 +156,30 @@ def run_evaluation(
                 "patch": result.patch
             })
 
-            logger.info(
-                f"  -> Confidence: {result.initial_confidence} -> {result.final_confidence}, "
-                f"Consulted: {result.consultation_triggered}, "
-                f"Time: {result.total_duration_ms}ms"
+            monitor.complete_task(
+                instance_id,
+                confidence=result.final_confidence,
+                consulted=result.consultation_triggered,
+                patch_generated=result.patch_generated,
+                duration_ms=result.total_duration_ms,
+                error=result.error
             )
 
         except Exception as e:
             logger.error(f"  -> Error: {e}")
             results.append({
-                "instance_id": task["instance_id"],
+                "instance_id": instance_id,
                 "configuration": mode,
                 "error": str(e)
             })
+            monitor.complete_task(
+                instance_id,
+                confidence=0,
+                consulted=False,
+                patch_generated=False,
+                duration_ms=0,
+                error=str(e)
+            )
 
     total_time = time.time() - start_time
 
@@ -179,6 +196,9 @@ def run_evaluation(
         "avg_time_per_task_seconds": total_time / len(tasks) if tasks else 0,
         "total_cost_usd": sum(r.get("cost_usd", 0) for r in results)
     }
+
+    # Finish monitoring and print summary
+    monitor.finish_evaluation()
 
     return {
         "stats": stats,
@@ -249,6 +269,10 @@ def main():
         "--verbose", action="store_true",
         help="Enable verbose logging"
     )
+    parser.add_argument(
+        "--mock", action="store_true",
+        help="Use mock responses for testing (no API calls)"
+    )
 
     args = parser.parse_args()
 
@@ -276,7 +300,7 @@ def main():
         baseline_dir.mkdir(exist_ok=True)
 
         results["baseline"] = run_evaluation(
-            tasks, "baseline", baseline_dir, args.verbose
+            tasks, "baseline", baseline_dir, args.verbose, args.mock
         )
 
         # Save baseline results
@@ -292,7 +316,7 @@ def main():
         polydev_dir.mkdir(exist_ok=True)
 
         results["polydev"] = run_evaluation(
-            tasks, "polydev", polydev_dir, args.verbose
+            tasks, "polydev", polydev_dir, args.verbose, args.mock
         )
 
         # Save polydev results
