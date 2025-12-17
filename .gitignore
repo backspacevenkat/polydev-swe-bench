@@ -83,3 +83,4 @@ docker-compose.override.yml
 secrets/
 *.pem
 *.key
+sb-cli/

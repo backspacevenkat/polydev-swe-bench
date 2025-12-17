@@ -13,6 +13,7 @@ Main agent class that orchestrates the evaluation pipeline:
 import os
 import json
 import time
+import re
 import logging
 import subprocess
 from pathlib import Path
@@ -24,6 +25,20 @@ from .consultation import PolydevConsultation
 from .patch_generator import PatchGenerator
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class TokenUsage:
+    """Token usage tracking per provider."""
+    provider: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+    
+    def add(self, input_tokens: int, output_tokens: int):
+        self.input_tokens += input_tokens
+        self.output_tokens += output_tokens
+        self.total_tokens += input_tokens + output_tokens
 
 
 @dataclass
@@ -72,6 +87,11 @@ class ConsultationResult:
     final_confidence: int = 0
     duration_ms: int = 0
     cost_usd: float = 0.0
+    # Token tracking
+    gpt_input_tokens: int = 0
+    gpt_output_tokens: int = 0
+    gemini_input_tokens: int = 0
+    gemini_output_tokens: int = 0
 
 
 @dataclass
@@ -105,6 +125,13 @@ class TaskResult:
 
     # Cost
     cost_usd: float = 0.0
+    
+    # Token tracking per provider
+    token_usage: Dict[str, Dict[str, int]] = field(default_factory=lambda: {
+        "claude": {"input": 0, "output": 0},
+        "gpt": {"input": 0, "output": 0},
+        "gemini": {"input": 0, "output": 0}
+    })
 
 
 class PolydevAgent:
@@ -150,6 +177,13 @@ class PolydevAgent:
 
         # Load prompts
         self.prompts = self._load_prompts()
+        
+        # Token tracking for current task
+        self._current_token_usage = {
+            "claude": {"input": 0, "output": 0},
+            "gpt": {"input": 0, "output": 0},
+            "gemini": {"input": 0, "output": 0}
+        }
 
         logger.info(
             f"PolydevAgent initialized: consultation={consultation_enabled}, "
@@ -181,6 +215,14 @@ class PolydevAgent:
                 prompts[filename.replace(".txt", "")] = ""
 
         return prompts
+    
+    def _reset_token_tracking(self):
+        """Reset token tracking for a new task."""
+        self._current_token_usage = {
+            "claude": {"input": 0, "output": 0},
+            "gpt": {"input": 0, "output": 0},
+            "gemini": {"input": 0, "output": 0}
+        }
 
     def solve_task(self, task: Dict[str, Any]) -> TaskResult:
         """
@@ -198,6 +240,7 @@ class PolydevAgent:
             TaskResult with patch and metadata
         """
         start_time = time.time()
+        self._reset_token_tracking()
 
         # Initialize result
         result = TaskResult(
@@ -250,6 +293,12 @@ class PolydevAgent:
                 if consultation_result.approach_changed:
                     solution.approach = consultation_result.final_approach
                     solution.confidence = consultation_result.final_confidence
+                
+                # Update token tracking from consultation
+                self._current_token_usage["gpt"]["input"] += consultation_result.gpt_input_tokens
+                self._current_token_usage["gpt"]["output"] += consultation_result.gpt_output_tokens
+                self._current_token_usage["gemini"]["input"] += consultation_result.gemini_input_tokens
+                self._current_token_usage["gemini"]["output"] += consultation_result.gemini_output_tokens
 
             result.consultation = consultation_result
             result.consultation_triggered = consultation_result.triggered
@@ -265,17 +314,24 @@ class PolydevAgent:
             result.patch_duration_ms = int((time.time() - patch_start) * 1000)
 
             result.total_duration_ms = int((time.time() - start_time) * 1000)
+            
+            # Copy token usage to result
+            result.token_usage = self._current_token_usage.copy()
 
             logger.info(
                 f"[{context.instance_id}] Complete: "
                 f"{result.total_duration_ms}ms, "
-                f"consulted={result.consultation_triggered}"
+                f"consulted={result.consultation_triggered}, "
+                f"tokens={{claude: {self._current_token_usage['claude']}, "
+                f"gpt: {self._current_token_usage['gpt']}, "
+                f"gemini: {self._current_token_usage['gemini']}}}"
             )
 
         except Exception as e:
             logger.error(f"[{task['instance_id']}] Error: {e}")
             result.error = str(e)
             result.total_duration_ms = int((time.time() - start_time) * 1000)
+            result.token_usage = self._current_token_usage.copy()
 
         # Save detailed log if log_dir specified
         if self.log_dir:
@@ -394,7 +450,12 @@ class PolydevAgent:
             final_approach=final_approach,
             final_confidence=final_confidence,
             duration_ms=consultation_time,
-            cost_usd=perspectives.get("cost_usd", 0.0)
+            cost_usd=perspectives.get("cost_usd", 0.0),
+            # Token tracking from consultation
+            gpt_input_tokens=perspectives.get("gpt_input_tokens", 0),
+            gpt_output_tokens=perspectives.get("gpt_output_tokens", 0),
+            gemini_input_tokens=perspectives.get("gemini_input_tokens", 0),
+            gemini_output_tokens=perspectives.get("gemini_output_tokens", 0)
         )
 
     def _generate_patch(
@@ -417,22 +478,57 @@ class PolydevAgent:
         return patch
 
     def _call_claude(self, prompt: str) -> str:
-        """Call Claude via Claude Code CLI."""
+        """Call Claude via Claude Code CLI with token tracking."""
         # Mock mode for testing
         if self.mock_mode:
             return self._generate_mock_response(prompt)
 
         for attempt in range(self.max_retries):
             try:
+                # Use JSON output to get token usage
                 result = subprocess.run(
-                    ["claude", "-p", prompt, "--output-format", "text"],
+                    ["claude", "-p", prompt, "--output-format", "json"],
                     capture_output=True,
                     text=True,
                     timeout=self.timeout_seconds
                 )
 
                 if result.returncode == 0:
-                    return result.stdout.strip()
+                    # Parse JSON response for token usage
+                    try:
+                        response_data = json.loads(result.stdout)
+                        
+                        # Extract token usage from response
+                        if isinstance(response_data, dict):
+                            usage = response_data.get("usage", {})
+                            input_tokens = usage.get("input_tokens", 0)
+                            output_tokens = usage.get("output_tokens", 0)
+                            
+                            # Update tracking
+                            self._current_token_usage["claude"]["input"] += input_tokens
+                            self._current_token_usage["claude"]["output"] += output_tokens
+                            
+                            # Get the actual response text
+                            if "result" in response_data:
+                                return response_data["result"]
+                            elif "content" in response_data:
+                                return response_data["content"]
+                            elif "text" in response_data:
+                                return response_data["text"]
+                            else:
+                                # Fallback to full response
+                                return json.dumps(response_data)
+                        else:
+                            return str(response_data)
+                            
+                    except json.JSONDecodeError:
+                        # Fallback to text parsing if JSON fails
+                        # Estimate tokens from response length
+                        input_tokens = len(prompt) // 4  # Rough estimate
+                        output_tokens = len(result.stdout) // 4
+                        self._current_token_usage["claude"]["input"] += input_tokens
+                        self._current_token_usage["claude"]["output"] += output_tokens
+                        return result.stdout.strip()
                 else:
                     logger.warning(
                         f"Claude CLI error (attempt {attempt + 1}): {result.stderr}"

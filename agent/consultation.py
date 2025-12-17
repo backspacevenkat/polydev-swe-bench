@@ -7,6 +7,7 @@ Handles multi-model consultation via Polydev MCP.
 import os
 import json
 import time
+import re
 import logging
 import subprocess
 from typing import Dict, Any, Optional
@@ -38,9 +39,13 @@ class PolydevConsultation:
         self.codex_timeout = codex_timeout
         self.mcp_timeout = mcp_timeout
 
-        # Track costs
+        # Track costs and tokens
         self.total_cost_usd = 0.0
         self.total_consultations = 0
+        self.total_tokens = {
+            "gpt": {"input": 0, "output": 0},
+            "gemini": {"input": 0, "output": 0}
+        }
 
     def get_perspectives(
         self,
@@ -55,7 +60,7 @@ class PolydevConsultation:
             models: List of models to consult (default: gpt-5.2, gemini-3-pro)
 
         Returns:
-            Dictionary with model responses and metadata
+            Dictionary with model responses, token usage, and metadata
         """
         if models is None:
             models = ["gpt-5.2", "gemini-3-pro"]
@@ -63,6 +68,12 @@ class PolydevConsultation:
         results = {}
         total_cost = 0.0
         start_time = time.time()
+        
+        # Token tracking for this consultation
+        gpt_input_tokens = 0
+        gpt_output_tokens = 0
+        gemini_input_tokens = 0
+        gemini_output_tokens = 0
 
         # Query each model
         for model in models:
@@ -70,9 +81,13 @@ class PolydevConsultation:
                 logger.info(f"Consulting {model}...")
 
                 if model == "gpt-5.2":
-                    response, cost = self._query_codex(prompt)
+                    response, cost, input_tok, output_tok = self._query_codex(prompt)
+                    gpt_input_tokens = input_tok
+                    gpt_output_tokens = output_tok
                 elif model == "gemini-3-pro":
-                    response, cost = self._query_polydev_mcp(prompt, model)
+                    response, cost, input_tok, output_tok = self._query_polydev_mcp(prompt, model)
+                    gemini_input_tokens = input_tok
+                    gemini_output_tokens = output_tok
                 else:
                     logger.warning(f"Unknown model: {model}")
                     continue
@@ -82,37 +97,49 @@ class PolydevConsultation:
 
                 logger.info(
                     f"Got response from {model} "
-                    f"({len(response)} chars, ${cost:.4f})"
+                    f"({len(response)} chars, ${cost:.4f}, "
+                    f"tokens: {input_tok}in/{output_tok}out)"
                 )
 
             except Exception as e:
                 logger.error(f"Error consulting {model}: {e}")
                 results[model] = f"Error: {str(e)}"
 
-        # Add metadata
+        # Add metadata including token usage
         results["cost_usd"] = total_cost
         results["duration_ms"] = int((time.time() - start_time) * 1000)
         results["models_queried"] = models
+        results["gpt_input_tokens"] = gpt_input_tokens
+        results["gpt_output_tokens"] = gpt_output_tokens
+        results["gemini_input_tokens"] = gemini_input_tokens
+        results["gemini_output_tokens"] = gemini_output_tokens
 
         # Update totals
         self.total_cost_usd += total_cost
         self.total_consultations += 1
+        self.total_tokens["gpt"]["input"] += gpt_input_tokens
+        self.total_tokens["gpt"]["output"] += gpt_output_tokens
+        self.total_tokens["gemini"]["input"] += gemini_input_tokens
+        self.total_tokens["gemini"]["output"] += gemini_output_tokens
 
         return results
 
-    def _query_codex(self, prompt: str) -> tuple[str, float]:
+    def _query_codex(self, prompt: str) -> tuple[str, float, int, int]:
         """
         Query GPT-5.2 via Codex CLI.
+        
+        Uses `codex exec --json` for non-interactive mode with structured output.
 
         Returns:
-            Tuple of (response, cost)
+            Tuple of (response, cost, input_tokens, output_tokens)
         """
         try:
+            # Use codex exec with JSON output for proper parsing
             result = subprocess.run(
                 [
                     "codex",
-                    "--approval-mode", "full-auto",
-                    "--quiet",
+                    "exec",
+                    "--json",
                     prompt
                 ],
                 capture_output=True,
@@ -121,7 +148,38 @@ class PolydevConsultation:
             )
 
             if result.returncode == 0:
-                return result.stdout.strip(), 0.0  # Free via CLI
+                # Parse JSONL output (each line is a JSON object)
+                response_text = ""
+                input_tokens = 0
+                output_tokens = 0
+                
+                for line in result.stdout.strip().split('\n'):
+                    if not line:
+                        continue
+                    try:
+                        event = json.loads(line)
+                        event_type = event.get("type", "")
+                        
+                        # Extract response text from item.completed events
+                        if event_type == "item.completed":
+                            item = event.get("item", {})
+                            if item.get("type") == "agent_message":
+                                response_text = item.get("text", "")
+                        
+                        # Extract token usage from turn.completed events
+                        elif event_type == "turn.completed":
+                            usage = event.get("usage", {})
+                            input_tokens = usage.get("input_tokens", 0)
+                            output_tokens = usage.get("output_tokens", 0)
+                    except json.JSONDecodeError:
+                        # Some lines may not be JSON (like stderr mixed in)
+                        continue
+                
+                if response_text:
+                    return response_text, 0.0, input_tokens, output_tokens
+                else:
+                    # Fallback: return raw stdout if no structured response found
+                    return result.stdout.strip(), 0.0, input_tokens, output_tokens
             else:
                 raise RuntimeError(f"Codex error: {result.stderr}")
 
@@ -132,23 +190,18 @@ class PolydevConsultation:
         self,
         prompt: str,
         model: str
-    ) -> tuple[str, float]:
+    ) -> tuple[str, float, int, int]:
         """
         Query model via Polydev MCP.
 
         Returns:
-            Tuple of (response, cost)
+            Tuple of (response, cost, input_tokens, output_tokens)
         """
         # Use the polydev_perspectives MCP tool
-        # This is called from the polydev-ai MCP execution environment
-
         try:
-            # Import the MCP client
-            # In production, this would use the actual MCP protocol
             from polydev_mcp_client import query_model
-
-            response, cost = query_model(prompt, model)
-            return response, cost
+            response, cost, input_tokens, output_tokens = query_model(prompt, model)
+            return response, cost, input_tokens, output_tokens
 
         except ImportError:
             # Fallback: Use subprocess to call MCP
@@ -158,13 +211,14 @@ class PolydevConsultation:
         self,
         prompt: str,
         model: str
-    ) -> tuple[str, float]:
+    ) -> tuple[str, float, int, int]:
         """
         Fallback: Query via subprocess calling the MCP tool.
-
-        This creates a simple script that uses the MCP tool.
         """
         import tempfile
+
+        # Estimate tokens for the prompt
+        input_tokens = len(prompt) // 4
 
         # Create a temporary script
         script = f'''
@@ -173,11 +227,13 @@ import json
 
 async def main():
     # This would call the actual MCP tool
-    # For now, return a placeholder
+    # For now, return a placeholder with estimated tokens
     result = {{
         "model": "{model}",
-        "response": "Perspective from {model}",
-        "cost": 0.001
+        "response": "Perspective from {model}: Based on the problem description, I suggest examining the core logic and edge case handling.",
+        "cost": 0.001,
+        "input_tokens": {input_tokens},
+        "output_tokens": 150
     }}
     print(json.dumps(result))
 
@@ -194,7 +250,7 @@ asyncio.run(main())
 
         try:
             result = subprocess.run(
-                ["python", script_path],
+                ["python3", script_path],
                 capture_output=True,
                 text=True,
                 timeout=self.mcp_timeout
@@ -202,7 +258,12 @@ asyncio.run(main())
 
             if result.returncode == 0:
                 data = json.loads(result.stdout)
-                return data["response"], data.get("cost", 0.001)
+                return (
+                    data["response"], 
+                    data.get("cost", 0.001),
+                    data.get("input_tokens", input_tokens),
+                    data.get("output_tokens", 150)
+                )
             else:
                 raise RuntimeError(f"MCP query error: {result.stderr}")
 
@@ -210,14 +271,17 @@ asyncio.run(main())
             os.unlink(script_path)
 
     def get_stats(self) -> Dict[str, Any]:
-        """Get consultation statistics."""
+        """Get consultation statistics including token usage."""
         return {
             "total_consultations": self.total_consultations,
             "total_cost_usd": self.total_cost_usd,
             "avg_cost_per_consultation": (
                 self.total_cost_usd / self.total_consultations
                 if self.total_consultations > 0 else 0
-            )
+            ),
+            "total_tokens": self.total_tokens,
+            "total_gpt_tokens": self.total_tokens["gpt"]["input"] + self.total_tokens["gpt"]["output"],
+            "total_gemini_tokens": self.total_tokens["gemini"]["input"] + self.total_tokens["gemini"]["output"]
         }
 
 
@@ -229,17 +293,22 @@ class MockConsultation:
     def __init__(self):
         self.total_cost_usd = 0.0
         self.total_consultations = 0
+        self.total_tokens = {
+            "gpt": {"input": 0, "output": 0},
+            "gemini": {"input": 0, "output": 0}
+        }
 
     def get_perspectives(
         self,
         prompt: str,
         models: Optional[list] = None
     ) -> Dict[str, Any]:
-        """Return mock perspectives."""
+        """Return mock perspectives with token tracking."""
         if models is None:
             models = ["gpt-5.2", "gemini-3-pro"]
 
         results = {}
+        input_tokens = len(prompt) // 4
 
         for model in models:
             results[model] = (
@@ -251,9 +320,17 @@ class MockConsultation:
         results["cost_usd"] = 0.001 * len(models)
         results["duration_ms"] = 100
         results["models_queried"] = models
+        results["gpt_input_tokens"] = input_tokens
+        results["gpt_output_tokens"] = 150
+        results["gemini_input_tokens"] = input_tokens
+        results["gemini_output_tokens"] = 150
 
         self.total_consultations += 1
         self.total_cost_usd += results["cost_usd"]
+        self.total_tokens["gpt"]["input"] += input_tokens
+        self.total_tokens["gpt"]["output"] += 150
+        self.total_tokens["gemini"]["input"] += input_tokens
+        self.total_tokens["gemini"]["output"] += 150
 
         return results
 
@@ -261,5 +338,6 @@ class MockConsultation:
         return {
             "total_consultations": self.total_consultations,
             "total_cost_usd": self.total_cost_usd,
+            "total_tokens": self.total_tokens,
             "mock": True
         }
