@@ -10,11 +10,16 @@ import subprocess
 import time
 import os
 import logging
-from typing import Dict, Any, List, Optional
+import re
+import requests  # Add HTTP client
 from dataclasses import dataclass, field
+from typing import Dict, Any, Optional
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Polydev HTTP API endpoint
+POLYDEV_HTTP_URL = os.environ.get("POLYDEV_HTTP_URL", "http://localhost:3847")
 
 # Path to the consultation script
 CONSULTATION_SCRIPT = Path(__file__).parent / "polydev_consultation.mjs"
@@ -187,54 +192,68 @@ class ClaudeModel:
 
     def consult_polydev(self, context: str) -> Dict[str, str]:
         """
-        Consult Polydev MCP for REAL multi-model perspectives.
+        Consult Polydev MCP for REAL multi-model perspectives via HTTP API.
 
-        This actually calls Claude, GPT-5.2, and Gemini in parallel.
+        Uses the Polydev HTTP server (polydev_http_server.mjs) which wraps
+        the actual Polydev MCP server for proper token tracking.
         """
-        logger.info("Triggering REAL Polydev MCP consultation...")
+        logger.info("Triggering REAL Polydev MCP consultation via HTTP...")
         start_time = time.time()
 
         perspectives = {}
 
         try:
-            # Call the consultation script
-            result = subprocess.run(
-                [NODE_CLI, str(CONSULTATION_SCRIPT), context],
-                capture_output=True,
-                text=True,
+            # Call Polydev HTTP API
+            response = requests.post(
+                f"{POLYDEV_HTTP_URL}/perspectives",
+                json={
+                    "prompt": context,
+                    "models": ["gpt-4o", "claude-3-5-sonnet-20241022", "gemini-2.0-flash-exp"],
+                },
                 timeout=self.config.consultation_timeout,
             )
 
-            if result.returncode == 0:
-                data = json.loads(result.stdout)
+            if response.status_code == 200:
+                data = response.json()
 
-                # Parse perspectives
-                for p in data.get("perspectives", []):
-                    model = p.get("model", "unknown")
-                    response = p.get("response", "")
-                    tokens = p.get("tokens_estimate", 0)
+                if data.get("success"):
+                    result = data.get("result", {})
 
-                    perspectives[model] = response
+                    # Parse perspectives from MCP response
+                    # The result structure depends on Polydev's response format
+                    if isinstance(result, dict):
+                        content = result.get("content", [])
+                        if isinstance(content, list):
+                            for item in content:
+                                if isinstance(item, dict) and item.get("type") == "text":
+                                    # Parse the text content for model responses
+                                    text = item.get("text", "")
+                                    perspectives["polydev"] = text
 
-                    # Track tokens
-                    if "claude" in model.lower():
-                        self.token_usage["claude"].add(tokens // 2, tokens // 2)
-                    elif "gpt" in model.lower():
-                        self.token_usage["gpt"].add(tokens // 2, tokens // 2)
-                    elif "gemini" in model.lower():
-                        self.token_usage["gemini"].add(tokens // 2, tokens // 2)
+                                    # Estimate tokens
+                                    tokens = len(text) // 4
+                                    self.token_usage["gpt"].add(tokens // 3, tokens // 3)
+                                    self.token_usage["claude"].add(tokens // 3, tokens // 3)
+                                    self.token_usage["gemini"].add(tokens // 3, tokens // 3)
 
-                latency = time.time() - start_time
-                total_tokens = data.get("total_tokens", 0)
-                logger.info(f"Consultation complete in {latency:.1f}s, {total_tokens} tokens")
+                    latency = data.get("latency_ms", (time.time() - start_time) * 1000)
+                    logger.info(f"Consultation complete in {latency/1000:.1f}s via Polydev MCP")
+
+                else:
+                    error_msg = data.get("error", "Unknown error")
+                    logger.warning(f"Polydev API error: {error_msg}")
+                    perspectives["error"] = f"Polydev API error: {error_msg}"
 
             else:
-                logger.warning(f"Consultation script error: {result.stderr[:200]}")
-                perspectives["error"] = f"Consultation failed: {result.stderr[:200]}"
+                logger.warning(f"Polydev HTTP error {response.status_code}: {response.text[:200]}")
+                perspectives["error"] = f"HTTP {response.status_code}: {response.text[:200]}"
 
-        except subprocess.TimeoutExpired:
-            logger.warning("Consultation timed out")
+        except requests.Timeout:
+            logger.warning("Polydev consultation timed out")
             perspectives["error"] = "Consultation timed out"
+        except requests.ConnectionError:
+            logger.warning("Cannot connect to Polydev HTTP server - is it running?")
+            perspectives["error"] = "Polydev server not running. Start with: node polydev_http_server.mjs"
         except Exception as e:
             logger.error(f"Consultation error: {e}")
             perspectives["error"] = str(e)
