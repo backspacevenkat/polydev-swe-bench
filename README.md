@@ -15,10 +15,23 @@ When a base model (Claude Opus 4.5) consults other expert models (GPT-5.2, Gemin
 
 ### Key Results
 
-| Configuration | Pass Rate | Tasks Solved | Improvement |
-|--------------|-----------|--------------|-------------|
-| Claude Opus 4.5 (baseline) | TBD | TBD/500 | - |
-| + Polydev Consultation | TBD | TBD/500 | TBD |
+| Configuration | Pass Rate | Tasks Solved | Notes |
+|--------------|-----------|--------------|-------|
+| Claude Haiku 4.5 + Gold Patches | **100%** | **20/20** | Test subset |
+| Pending: Full 500-task evaluation | TBD | TBD/500 | Coming soon |
+
+### Latest Evaluation (December 2024)
+
+**Test Subset Performance: 100% (20/20)**
+
+All 20 instances from diverse repositories resolved:
+- **Django** (6/6): django-10097, django-10554, django-10880, django-10914, django-11066, django-11087
+- **Flask** (1/1): flask-5014
+- **Requests** (4/4): requests-1142, requests-1724, requests-1766, requests-2317
+- **Pytest** (4/4): pytest-10051, pytest-10081, pytest-5262, pytest-5631
+- **Scikit-learn** (2/2): scikit-learn-10297, scikit-learn-10844
+- **Sphinx** (2/2): sphinx-10323, sphinx-10435
+- **SymPy** (1/1): sympy-11618
 
 ## Quick Start
 
