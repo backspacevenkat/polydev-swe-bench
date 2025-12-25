@@ -308,37 +308,43 @@ main().catch(e => console.log(JSON.stringify({{success: false, error: e.message}
 
 
 def git_clone_with_retry(repo: str, repo_dir: Path, base_commit: str) -> bool:
-    """Clone and checkout with retries."""
+    """Clone and checkout with retries. Uses shallow clone for speed."""
     for attempt in range(GIT_RETRY_COUNT):
         try:
             if repo_dir.exists():
                 shutil.rmtree(repo_dir)
             repo_dir.parent.mkdir(parents=True, exist_ok=True)
 
+            # Shallow clone (faster for large repos)
             clone = subprocess.run(
-                ["git", "clone", "--quiet", f"https://github.com/{repo}.git", str(repo_dir)],
-                capture_output=True, timeout=600,
+                ["git", "clone", "--quiet", "--depth=1", f"https://github.com/{repo}.git", str(repo_dir)],
+                capture_output=True, timeout=300,
                 env={**os.environ, "GIT_TERMINAL_PROMPT": "0"}
             )
             if clone.returncode != 0:
                 raise Exception(f"Clone failed: {clone.stderr.decode()[:200]}")
 
+            # Fetch the specific commit we need
+            fetch = subprocess.run(
+                ["git", "fetch", "--quiet", "--depth=1", "origin", base_commit],
+                cwd=repo_dir, capture_output=True, timeout=300,
+                env={**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+            )
+            if fetch.returncode != 0:
+                # If specific commit fetch fails, try fetching more history
+                subprocess.run(
+                    ["git", "fetch", "--quiet", "--unshallow"],
+                    cwd=repo_dir, capture_output=True, timeout=600,
+                    env={**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+                )
+
+            # Checkout specific commit
             checkout = subprocess.run(
                 ["git", "checkout", "--quiet", base_commit],
                 cwd=repo_dir, capture_output=True, timeout=120
             )
             if checkout.returncode != 0:
-                subprocess.run(
-                    ["git", "fetch", "--quiet", "--depth=100", "origin"],
-                    cwd=repo_dir, capture_output=True, timeout=300,
-                    env={**os.environ, "GIT_TERMINAL_PROMPT": "0"}
-                )
-                checkout = subprocess.run(
-                    ["git", "checkout", "--quiet", base_commit],
-                    cwd=repo_dir, capture_output=True, timeout=120
-                )
-                if checkout.returncode != 0:
-                    raise Exception(f"Checkout failed: {checkout.stderr.decode()[:200]}")
+                raise Exception(f"Checkout failed: {checkout.stderr.decode()[:200]}")
 
             return True
 
@@ -469,7 +475,6 @@ After making changes, verify with 'git diff' that your changes are saved."""
                     "--output-format", "json",
                     "--dangerously-skip-permissions",
                     "--max-turns", str(MAX_TURNS),
-                    "--add-dir", str(repo_dir),
                     "-p", prompt
                 ],
                 capture_output=True,
