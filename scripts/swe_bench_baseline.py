@@ -364,9 +364,12 @@ After making changes, verify with 'git diff' that your changes are saved."""
                 text=True,
                 cwd=repo_dir
             )
-            
+
             patch = diff.stdout.strip()
-            
+            # Ensure patch ends with newline (required for proper git apply)
+            if patch and not patch.endswith("\n"):
+                patch += "\n"
+
             # Check if we got a valid patch
             if patch:
                 result["model_patch"] = patch
@@ -525,6 +528,7 @@ def main():
     parser.add_argument("--test", type=int, help="Test mode: run on N samples only")
     parser.add_argument("--resume", action="store_true", help="Resume from previous run")
     parser.add_argument("--run-id", type=str, help="Custom run ID")
+    parser.add_argument("--instances", type=str, help="JSON file with list of instance IDs to run")
     args = parser.parse_args()
 
     # Setup
@@ -565,6 +569,13 @@ def main():
 
     # Filter instances
     instances = [inst for inst in all_instances if inst["instance_id"] not in completed_instances]
+
+    # Filter by specific instance IDs if provided
+    if args.instances:
+        with open(args.instances) as f:
+            target_ids = set(json.load(f))
+        instances = [inst for inst in instances if inst["instance_id"] in target_ids]
+        print(f"  Filtered to {len(instances)} specific instances from {args.instances}")
 
     # Test mode
     if args.test:

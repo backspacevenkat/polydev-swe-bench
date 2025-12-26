@@ -66,7 +66,7 @@ class AgentConfig:
         "MINI_SWE_AGENT_FINAL_OUTPUT",
     ])
     consultation_enabled: bool = True
-    consultation_after_steps: int = 15  # Consult after 15 steps
+    consultation_after_steps: int = 25  # Consult every 25 steps for guidance
     consultation_on_failure: bool = True  # Consult when stuck
     run_tests_before_submit: bool = True  # Validate fix before submitting
 
@@ -75,51 +75,78 @@ class AgentConfig:
 
 SYSTEM_TEMPLATE = """You are an expert software engineer solving a GitHub issue.
 
-Your response must contain exactly ONE bash code block with ONE command.
-Include a THOUGHT section before your command explaining your reasoning.
+Your response must contain exactly ONE bash code block with ONE command (or commands connected with && or ||).
+Include a THOUGHT section before your command where you explain your reasoning process.
 
-<format>
-THOUGHT: Your reasoning about what to do next.
+<format_example>
+THOUGHT: Your reasoning and analysis here. Explain why you want to perform the action.
 
 ```bash
 your_command_here
 ```
-</format>
+</format_example>
 
-## Workflow
-1. Read and understand the issue
-2. Explore the codebase to find relevant files
-3. Create a reproduction script if helpful
-4. Implement the fix by editing files
-5. Run relevant tests to verify your fix
-6. Submit with: echo POLYDEV_SUBMIT_PATCH
+Failure to follow these rules will cause your response to be rejected.
 
-## Commands
-- View files: `cat filename.py` or `head -n 50 filename.py`
-- Search: `grep -r "pattern" .` or `find . -name "*.py"`
-- Edit files: `sed -i 's/old/new/g' file.py` (use `sed -i '' ...` on macOS)
-- Create files: `cat <<'EOF' > file.py ... EOF`
-- Run tests: `python -m pytest tests/test_specific.py -v`
+## Important Rules
+1. Every response must contain exactly one bash code block
+2. The bash block must contain exactly one command (or commands connected with && or ||)
+3. Directory or environment variable changes are not persistent - every action is executed in a new subshell
+4. You can prefix any action with `cd /path/to/dir && ...` or write/load environment variables from files
+5. Do NOT modify test files - only modify source code files
 
-## Important
-- One command per response
-- Changes are NOT persistent across commands (no cd)
-- Use full paths or prefix commands with `cd /path && ...`
-- RUN TESTS before submitting to validate your fix
-- When done, output: echo POLYDEV_SUBMIT_PATCH"""
+## Useful Command Examples
+### Create a new file:
+```bash
+cat <<'EOF' > newfile.py
+import numpy as np
+hello = "world"
+print(hello)
+EOF
+```
 
-INSTANCE_TEMPLATE = """## Task
+### Edit files with sed:
+```bash
+sed -i 's/old_string/new_string/g' filename.py
+```
+
+### View file contents:
+```bash
+cat filename.py
+```
+
+### Search for patterns:
+```bash
+grep -r "pattern" . --include="*.py"
+```
+
+### Run tests:
+```bash
+cd /path/to/repo && python -m pytest tests/test_specific.py -v
+```
+
+## Submission
+When you've completed your work and verified your fix works, submit with:
+```bash
+echo POLYDEV_SUBMIT_PATCH && git add -A && git diff --cached
+```
+After this command, you cannot continue working on this task."""
+
+INSTANCE_TEMPLATE = """## Problem Statement
 {problem_statement}
 
-## Repository
-The repository is cloned at: {repo_path}
+## Repository Location
+{repo_path}
 
-## Instructions
-1. Explore the repository to understand the codebase
-2. Find the files related to this issue
-3. Implement a fix
-4. Run relevant tests to verify your fix works
-5. When complete, submit with: echo POLYDEV_SUBMIT_PATCH
+## Recommended Workflow
+Follow this workflow step-by-step to solve the issue:
+1. **Explore the codebase** - Find and read relevant files
+2. **Create a reproduction script** - Write a minimal script that reproduces the issue
+3. **Run the reproduction script** - Verify you can reproduce the bug
+4. **Edit the source code** - Make changes to fix the issue
+5. **Verify your fix** - Run the reproduction script again
+6. **Test edge cases** - Make sure your fix handles edge cases
+7. **Submit your changes** - Use `echo POLYDEV_SUBMIT_PATCH && git add -A && git diff --cached`
 
 Begin by exploring the repository structure."""
 
@@ -128,20 +155,41 @@ OBSERVATION_TEMPLATE = """<returncode>{returncode}</returncode>
 {output}
 </output>"""
 
-FORMAT_ERROR_TEMPLATE = """Please provide EXACTLY ONE bash command in triple backticks.
-Found {n_actions} actions.
+FORMAT_ERROR_TEMPLATE = """Please always provide EXACTLY ONE bash code block with your command.
+Your last response had {n_actions} bash code blocks instead of 1.
 
-Correct format:
-THOUGHT: Your reasoning.
+<correct_format>
+THOUGHT: Your reasoning and analysis here.
 
 ```bash
-your_single_command
-```"""
+your_single_command_here
+```
+</correct_format>
+
+<wrong_format>
+```bash
+command1
+```
+
+```bash
+command2
+```
+</wrong_format>
+
+Note: If you need to run multiple commands, combine them with && or || in a single bash block."""
 
 TIMEOUT_TEMPLATE = """Command timed out after {timeout}s and was killed.
 Partial output: {output}
 
 Please try a different command that completes faster."""
+
+OBSERVATION_TRUNCATED_TEMPLATE = """<warning>
+The output of your last command was too long ({total_chars} chars).
+Please try a different command that produces less output.
+</warning>
+<output_head>{head}</output_head>
+<elided_chars>{elided} characters elided</elided_chars>
+<output_tail>{tail}</output_tail>"""
 
 CONSULTATION_TEMPLATE = """## Multi-Model Consultation Request
 
@@ -339,24 +387,30 @@ Continue by making the required code changes."""
         return result.get("output", "")
 
     def _truncate_output(self, output: str, max_length: int = 10000) -> str:
-        """Truncate long output."""
+        """Truncate long output using mini-SWE-agent style formatting."""
         if len(output) <= max_length:
             return output
 
-        head = output[:4000]
-        tail = output[-4000:]
-        elided = len(output) - 8000
+        head = output[:5000]
+        tail = output[-5000:]
+        elided = len(output) - 10000
 
-        return f"{head}\n\n... [{elided} characters elided] ...\n\n{tail}"
+        return OBSERVATION_TRUNCATED_TEMPLATE.format(
+            total_chars=len(output),
+            head=head,
+            elided=elided,
+            tail=tail
+        )
 
     def _should_consult(self) -> bool:
         """Check if we should trigger Polydev consultation."""
         if not self.config.consultation_enabled:
             return False
 
-        # Consult every N steps
-        if self.step_count > 0 and self.step_count % self.config.consultation_after_steps == 0:
-            return True
+        # Consult every N steps (if enabled, i.e., > 0)
+        if self.config.consultation_after_steps > 0:
+            if self.step_count > 0 and self.step_count % self.config.consultation_after_steps == 0:
+                return True
 
         # Check if model indicated it's stuck
         if self.messages and len(self.messages) >= 2:

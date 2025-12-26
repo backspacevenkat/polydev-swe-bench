@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-12-25T15:13:10.366423",
+  "run_id": "validation-baseline-20",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "completed": 20,
+  "total": 20,
+  "patches_generated": 20,
+  "patch_rate_pct": 100.0,
+  "errors": 0,
+  "total_cost_usd": 0.8835,
+  "total_input_tokens": 0,
+  "total_output_tokens": 0,
+  "avg_turns": 56.3,
+  "avg_time_sec": 386.6,
+  "elapsed_mins": 29.5,
+  "rate_per_min": 0.68,
+  "eta_mins": 0.0
+}

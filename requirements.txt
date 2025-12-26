@@ -11,6 +11,9 @@ tqdm>=4.66.0
 swebench>=4.0.0
 datasets>=2.0.0
 
+# MCP (Model Context Protocol) - Official SDK
+mcp>=1.24.0
+
 # Data processing
 pandas>=2.0.0
 numpy>=1.24.0

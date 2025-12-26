@@ -1,0 +1,13 @@
+date: '2025-12-25'
+methodology: Anthropic's exact methodology with 128K thinking budget
+model: claude-haiku-4-5-20251001
+name: Polydev-Baseline-validation-baseline-20
+oss: true
+prompt: You should use tools as much as possible, ideally more than 100 times. You
+  should also implement your own tests first before attempting the problem.
+stats:
+  patches_generated: 20
+  total_cost_usd: 0.88
+  total_instances: 20
+  total_tokens: 0
+thinking_tokens: 128000

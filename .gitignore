@@ -41,18 +41,6 @@ env/
 .env.local
 .env.*.local
 
-# Logs
-logs/
-*.log
-
-# Results (keep structure, ignore data)
-results/*/
-!results/.gitkeep
-
-# Data (keep structure, ignore data)
-data/*/
-!data/.gitkeep
-
 # OS files
 .DS_Store
 Thumbs.db
@@ -83,4 +71,17 @@ docker-compose.override.yml
 secrets/
 *.pem
 *.key
+
+# SWE-bench CLI (contains credentials)
 sb-cli/
+
+# Large log files (keep structure, exclude large files)
+*.log
+
+# Trajectories (too large for git, store separately)
+results/*/trajectories/
+
+# Keep results structure
+!results/.gitkeep
+!results/baseline/.gitkeep
+!results/polydev/.gitkeep

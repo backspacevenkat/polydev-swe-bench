@@ -1,0 +1,53 @@
+{
+  "timestamp": "2025-12-25T14:36:26.932935",
+  "model": "claude-haiku-4-5-20251001",
+  "instances_tested": 20,
+  "results": {
+    "baseline_resolved": 13,
+    "polydev_resolved": 13,
+    "hybrid_resolved": 15,
+    "improvement_over_baseline_pct": 15.384615384615385
+  },
+  "breakdown": {
+    "both_solved": [
+      "astropy__astropy-14508",
+      "astropy__astropy-14995",
+      "astropy__astropy-7166",
+      "django__django-11292",
+      "django__django-12125",
+      "django__django-13417",
+      "django__django-13741",
+      "pydata__xarray-3677",
+      "pytest-dev__pytest-7571",
+      "scikit-learn__scikit-learn-26323",
+      "sympy__sympy-16766"
+    ],
+    "baseline_only": [
+      "django__django-11532",
+      "django__django-13401"
+    ],
+    "polydev_only": [
+      "django__django-16100",
+      "scikit-learn__scikit-learn-25973"
+    ],
+    "neither": [
+      "django__django-11400",
+      "django__django-11734",
+      "django__django-14034",
+      "matplotlib__matplotlib-25479",
+      "pylint-dev__pylint-7080"
+    ]
+  },
+  "tokens": {
+    "baseline_total": 60696,
+    "polydev_total": 157361,
+    "grand_total": 218057
+  },
+  "cost_usd": {
+    "baseline": 0.0971136,
+    "polydev": 0.2664072,
+    "total": 0.3635208,
+    "per_instance": 0.018176039999999997,
+    "per_solved": 0.024234719999999998
+  }
+}

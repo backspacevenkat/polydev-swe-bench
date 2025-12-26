@@ -2,7 +2,7 @@
 Model interface for Claude CLI with REAL Polydev MCP consultation.
 
 Uses Claude Code CLI for primary inference.
-Integrates actual Polydev MCP for multi-model consultation.
+Integrates actual Polydev MCP for multi-model consultation via direct stdio.
 """
 
 import json
@@ -11,22 +11,19 @@ import time
 import os
 import logging
 import re
-import requests  # Add HTTP client
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Polydev HTTP API endpoint
-POLYDEV_HTTP_URL = os.environ.get("POLYDEV_HTTP_URL", "http://localhost:3847")
-
-# Path to the consultation script
-CONSULTATION_SCRIPT = Path(__file__).parent / "polydev_consultation.mjs"
+# Polydev MCP user token (from environment or default)
+POLYDEV_USER_TOKEN = os.environ.get("POLYDEV_USER_TOKEN", "pd_b7b92f3630d7ca1f0b143d9f0ddaebcb5e8919613033d8bd0ff8e752692b0a96")
 
 # Full paths to CLIs (to avoid PATH issues in subprocesses)
 CLAUDE_CLI = "/Users/venkat/.nvm/versions/node/v22.20.0/bin/claude"
 NODE_CLI = "/Users/venkat/.nvm/versions/node/v22.20.0/bin/node"
+NPX_CLI = "/Users/venkat/.nvm/versions/node/v22.20.0/bin/npx"
 
 
 @dataclass
@@ -192,72 +189,129 @@ class ClaudeModel:
 
     def consult_polydev(self, context: str) -> Dict[str, str]:
         """
-        Consult Polydev MCP for REAL multi-model perspectives via HTTP API.
-
-        Uses the Polydev HTTP server (polydev_http_server.mjs) which wraps
-        the actual Polydev MCP server for proper token tracking.
+        Consult Polydev MCP for REAL multi-model perspectives via direct stdio.
+        
+        Calls the polydev-ai npm package directly using MCP JSON-RPC protocol.
+        This is the same approach used by mcp-execution.
         """
-        logger.info("Triggering REAL Polydev MCP consultation via HTTP...")
+        logger.info("Triggering Polydev MCP consultation via direct stdio...")
         start_time = time.time()
-
+        
         perspectives = {}
-
+        process = None
+        
         try:
-            # Call Polydev HTTP API
-            response = requests.post(
-                f"{POLYDEV_HTTP_URL}/perspectives",
-                json={
-                    "prompt": context,
-                    "models": ["gpt-4o", "claude-3-5-sonnet-20241022", "gemini-2.0-flash-exp"],
-                },
-                timeout=self.config.consultation_timeout,
+            # Call polydev-ai via npx with stdio
+            env = os.environ.copy()
+            env["POLYDEV_USER_TOKEN"] = POLYDEV_USER_TOKEN
+            
+            process = subprocess.Popen(
+                [NPX_CLI, "-y", "polydev-ai@latest"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
+                text=True,
+                bufsize=1  # Line buffered
             )
-
-            if response.status_code == 200:
-                data = response.json()
-
-                if data.get("success"):
-                    result = data.get("result", {})
-
-                    # Parse perspectives from MCP response
-                    # The result structure depends on Polydev's response format
-                    if isinstance(result, dict):
-                        content = result.get("content", [])
-                        if isinstance(content, list):
-                            for item in content:
-                                if isinstance(item, dict) and item.get("type") == "text":
-                                    # Parse the text content for model responses
-                                    text = item.get("text", "")
-                                    perspectives["polydev"] = text
-
-                                    # Estimate tokens
-                                    tokens = len(text) // 4
-                                    self.token_usage["gpt"].add(tokens // 3, tokens // 3)
-                                    self.token_usage["claude"].add(tokens // 3, tokens // 3)
-                                    self.token_usage["gemini"].add(tokens // 3, tokens // 3)
-
-                    latency = data.get("latency_ms", (time.time() - start_time) * 1000)
-                    logger.info(f"Consultation complete in {latency/1000:.1f}s via Polydev MCP")
-
-                else:
-                    error_msg = data.get("error", "Unknown error")
-                    logger.warning(f"Polydev API error: {error_msg}")
-                    perspectives["error"] = f"Polydev API error: {error_msg}"
-
-            else:
-                logger.warning(f"Polydev HTTP error {response.status_code}: {response.text[:200]}")
-                perspectives["error"] = f"HTTP {response.status_code}: {response.text[:200]}"
-
-        except requests.Timeout:
-            logger.warning("Polydev consultation timed out")
+            
+            # Send initialization request
+            init_request = json.dumps({
+                "jsonrpc": "2.0",
+                "id": 0,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "swe-bench-agent", "version": "1.0.0"}
+                }
+            })
+            
+            # Send get_perspectives request
+            mcp_request = json.dumps({
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                    "name": "get_perspectives",
+                    "arguments": {
+                        "prompt": context,
+                        "timeout_ms": self.config.consultation_timeout * 1000
+                    }
+                }
+            })
+            
+            # Write requests
+            process.stdin.write(init_request + "\n")
+            process.stdin.write(mcp_request + "\n")
+            process.stdin.flush()
+            
+            # Read responses line by line (don't close stdin yet)
+            # Wait for the response with id=1
+            import select
+            deadline = time.time() + self.config.consultation_timeout
+            
+            while time.time() < deadline:
+                # Check if there's data to read
+                ready, _, _ = select.select([process.stdout], [], [], 1.0)
+                if not ready:
+                    continue
+                    
+                line = process.stdout.readline()
+                if not line:
+                    break
+                    
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Try to parse as JSON
+                if line.startswith("{"):
+                    try:
+                        resp = json.loads(line)
+                        if resp.get("id") == 1:
+                            # This is our response
+                            if "result" in resp:
+                                result = resp["result"]
+                                if isinstance(result, dict) and "content" in result:
+                                    for item in result["content"]:
+                                        if item.get("type") == "text":
+                                            perspectives["polydev"] = item.get("text", "")
+                                            
+                                            # Estimate tokens for tracking
+                                            tokens = len(perspectives["polydev"]) // 4
+                                            self.token_usage["gpt"].add(tokens // 2, tokens // 2)
+                                            self.token_usage["gemini"].add(tokens // 2, tokens // 2)
+                            elif "error" in resp:
+                                perspectives["error"] = resp["error"].get("message", "Unknown MCP error")
+                            
+                            # Got our response, exit loop
+                            break
+                    except json.JSONDecodeError:
+                        continue
+            
+            latency = (time.time() - start_time) * 1000
+            logger.info(f"Polydev consultation complete in {latency/1000:.1f}s")
+                
+        except subprocess.TimeoutExpired:
+            logger.warning("Polydev MCP consultation timed out")
             perspectives["error"] = "Consultation timed out"
-        except requests.ConnectionError:
-            logger.warning("Cannot connect to Polydev HTTP server - is it running?")
-            perspectives["error"] = "Polydev server not running. Start with: node polydev_http_server.mjs"
+        except FileNotFoundError:
+            logger.error("npx not found - ensure Node.js is installed")
+            perspectives["error"] = "npx not found"
         except Exception as e:
-            logger.error(f"Consultation error: {e}")
+            logger.error(f"Polydev consultation error: {e}")
             perspectives["error"] = str(e)
-
+        finally:
+            # Clean up process
+            if process:
+                try:
+                    process.stdin.close()
+                    process.terminate()
+                    process.wait(timeout=5)
+                except:
+                    process.kill()
+        
         return perspectives
 
     def get_stats(self) -> Dict[str, Any]:
