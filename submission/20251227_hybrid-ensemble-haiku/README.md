@@ -63,9 +63,10 @@ Problem Statement ─┬─► [Baseline Path] ─► Patch A ─┐
 ## Citation
 
 ```bibtex
-@article{polydev-swe-bench-2025,
-  title={Ensemble Multi-Model Consultation for Automated Software Engineering},
-  author={Venkat B.},
+@article{ghanta2025multimodel,
+  title={Multi-Model Ensemble for Automated Software Engineering: Achieving 74.6\% on SWE-bench Verified},
+  author={Ghanta, Venkata Subrhmanyam},
+  journal={arXiv preprint arXiv:2501.XXXXX},
   year={2025},
   url={https://github.com/backspacevenkat/polydev-swe-bench}
 }

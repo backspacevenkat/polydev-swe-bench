@@ -1,7 +1,17 @@
 # Polydev SWE-bench: Multi-Model Ensemble for Automated Software Engineering
 
 [![SWE-bench Verified](https://img.shields.io/badge/SWE--bench%20Verified-74.6%25-brightgreen)](https://www.swebench.com/)
+[![arXiv](https://img.shields.io/badge/arXiv-2501.XXXXX-b31b1b.svg)](https://arxiv.org/abs/2501.XXXXX)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+## Publications & Resources
+
+| Resource | Link |
+|----------|------|
+| arXiv Paper | [Multi-Model Ensemble for Automated Software Engineering](paper/ARXIV_PAPER.md) |
+| Blog Post | [How We Achieved 74.6% on SWE-bench](paper/BLOG_POST.md) |
+| SWE-bench Submission | [submission/20251227_hybrid-ensemble-haiku/](submission/20251227_hybrid-ensemble-haiku/) |
+| Polydev | [polydev.ai](https://polydev.ai) |
 
 ## 🎯 Key Finding
 
@@ -35,10 +45,12 @@ The approaches solve **different** problems (not redundantly):
 
 | Metric | Baseline | Polydev | Hybrid |
 |--------|----------|---------|--------|
-| Total Cost | $1.98 | $4.88 | $6.86 |
-| Avg Duration | 386s | 558s | - |
-| Avg Turns | 59 | 68 | - |
-| Est. Total Tokens | 989K | 1.98M | 2.97M |
+| Total Cost | $46.21 | $63.44 | $109.65 |
+| Total Duration | 102.8 hrs | 149.4 hrs | ~250 hrs |
+| Avg Duration | 555.8s | 819.9s | - |
+| Total Turns | 44,048 | 41,620 | 85,668 |
+| Avg Turns | 66.1 | 63.5 | - |
+| Cost/Resolved | $0.143 | $0.190 | $0.294 |
 
 ## 🔬 Methodology
 
@@ -51,8 +63,10 @@ The approaches solve **different** problems (not redundantly):
 ### Multi-Model Consultation (Polydev)
 - **System**: [Polydev MCP](https://polydev.ai) (configured via dashboard)
 - **Consultation Models**: GPT 5.2 Codex, Gemini 3 Flash Preview
-- **Success Rate**: 97.5%
-- **Avg Consultation Time**: 118s
+- **Total Consultations**: 655
+- **Success Rate**: 96.2%
+- **Total Consultation Time**: 53.3 hours
+- **Avg Consultation Time**: 293s
 
 ### Hybrid Ensemble Strategy
 
@@ -190,14 +204,21 @@ Our analysis reveals that baseline and Polydev solve **different types of proble
 If you use this work, please cite:
 
 ```bibtex
-@article{polydev-swe-bench-2025,
-  title={Ensemble Multi-Model Consultation for Automated Software Engineering:
-         When Single Models Get Stuck, Diverse Perspectives Help},
-  author={Venkat B.},
+@article{ghanta2025multimodel,
+  title={Multi-Model Ensemble for Automated Software Engineering:
+         Achieving 74.6\% on SWE-bench Verified},
+  author={Ghanta, Venkata Subrhmanyam},
+  journal={arXiv preprint arXiv:2501.XXXXX},
   year={2025},
   url={https://github.com/backspacevenkat/polydev-swe-bench}
 }
 ```
+
+## 👤 Author
+
+**Venkata Subrhmanyam Ghanta**
+- Email: vsghanta@asu.edu
+- Affiliation: Arizona State University & Polydev AI
 
 ## 🔗 Related Work
 
