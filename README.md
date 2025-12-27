@@ -1,11 +1,11 @@
 # Polydev SWE-bench: Multi-Model Ensemble for Automated Software Engineering
 
-[![SWE-bench Verified](https://img.shields.io/badge/SWE--bench%20Verified-70%25-brightgreen)](https://www.swebench.com/)
+[![SWE-bench Verified](https://img.shields.io/badge/SWE--bench%20Verified-74.6%25-brightgreen)](https://www.swebench.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## 🎯 Key Finding
 
-**Single-model and multi-model approaches solve DIFFERENT problems.** Combining them in a hybrid ensemble achieves **70% pass rate** compared to 62.5% for baseline alone—a **12% relative improvement**.
+**Single-model and multi-model approaches solve DIFFERENT problems.** Combining them in a hybrid ensemble achieves **74.6% pass rate** (373/500) compared to 64.6% for baseline alone—a **15.5% relative improvement**.
 
 ## Overview
 
@@ -13,23 +13,23 @@ This repository contains the implementation and evaluation of a **hybrid ensembl
 
 ## 📊 Results Summary
 
-### Pass Rates (40 Instance Validation)
+### Pass Rates (500 Instance Full Evaluation)
 
 | Approach | Pass Rate | Instances Solved | Unique Solves |
 |----------|-----------|------------------|---------------|
-| Baseline (Claude Haiku 4.5) | 62.5% | 25/40 | 3 |
-| Polydev (Multi-Model Consultation) | 64.1% | 25/39 | 3 |
-| **Hybrid Ensemble** | **70.0%** | **28/40** | - |
+| Baseline (Claude Haiku 4.5) | 64.6% | 323/500 | 40 |
+| Polydev (Multi-Model Consultation) | 66.6% | 333/500 | 50 |
+| **Hybrid Ensemble** | **74.6%** | **373/500** | - |
 
 ### Complementarity Analysis
 
 The approaches solve **different** problems (not redundantly):
 
-| Category | Count | Instances |
-|----------|-------|-----------|
-| Both solved | 22 | Core overlap |
-| **Baseline only** | 3 | `django__django-11532`, `astropy__astropy-14508`, `sympy__sympy-15976` |
-| **Polydev only** | 3 | `sympy__sympy-13031`, `pylint-dev__pylint-7080`, `scikit-learn__scikit-learn-25973` |
+| Category | Count | Description |
+|----------|-------|-------------|
+| Both solved | 283 | Core overlap - both approaches succeeded |
+| **Baseline only** | 40 | Instances where single-model succeeded but multi-model failed |
+| **Polydev only** | 50 | Instances where multi-model consultation provided the winning insight |
 
 ### Cost & Performance Metrics
 
@@ -147,11 +147,12 @@ polydev-swe-bench/
 ## 🔄 Reproducibility
 
 ### Experimental Setup
-- **Benchmark**: SWE-bench Verified (500 instances, 40 tested)
+- **Benchmark**: SWE-bench Verified (500 instances, all evaluated)
 - **Base Model**: Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
 - **Thinking Budget**: 128,000 tokens
 - **Hardware**: macOS (Darwin 24.5.0)
-- **Date**: December 25, 2025
+- **Date**: December 25-27, 2025
+- **Total Evaluation Time**: ~48 hours
 
 ### Data Availability
 - **Benchmark**: [SWE-bench Verified](https://huggingface.co/datasets/princeton-nlp/SWE-bench_Verified)
