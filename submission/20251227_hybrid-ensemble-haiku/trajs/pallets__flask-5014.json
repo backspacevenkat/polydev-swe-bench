@@ -1,0 +1,20 @@
+{
+  "instance_id": "pallets__flask-5014",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 35,
+    "cost_usd": 0.018657999999999998,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 1063.9,
+    "git_clone_sec": 16.6,
+    "claude_sec": 1046.6,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 1134,
+  "error": null,
+  "timestamp": "2025-12-25T21:10:48.575747"
+}

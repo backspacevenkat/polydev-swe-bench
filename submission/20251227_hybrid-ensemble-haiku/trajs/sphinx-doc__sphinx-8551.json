@@ -1,0 +1,20 @@
+{
+  "instance_id": "sphinx-doc__sphinx-8551",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 62,
+    "cost_usd": 0.17639075,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 325.6,
+    "git_clone_sec": 3.4,
+    "claude_sec": 322.1,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 3534,
+  "error": null,
+  "timestamp": "2025-12-25T23:44:33.669695"
+}

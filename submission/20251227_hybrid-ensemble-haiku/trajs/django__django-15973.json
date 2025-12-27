@@ -1,0 +1,83 @@
+{
+  "instance_id": "django__django-15973",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "polydev_used": true,
+  "polydev_success": true,
+  "polydev_models": [
+    "gpt-5.2-codex",
+    "\nFile \"/home/elysium/.local/share/virtualenvs/django-bugfix-O9qARFZW/lib/python3.9/site-packages/django/db/migrations/executor.py\", line 135, in mig\nrate\nstate = self._migrate_all_forwards(\nFile \"/home/elysium/.local/share/virtualenvs/django-bugfix-O9qARFZW/lib/python3.9/site-packages/django/db/migrations/executor.py\", line 167, in _mi\ngrate_all_forwards\nstate = self.apply_migration(\nFile \"/home/elysium/.local/share/virtualenvs/django-bugfix-O9qARFZW/lib/python3.9/site-packages/django/db/migrations/executor.py\", line 252, in app\nly_migration\nstate = migration.apply(state, schema_editor",
+    "Autodetector",
+    "SchemaEditor"
+  ],
+  "polydev_model_tokens": {
+    "gpt-4": {
+      "input": 0,
+      "output": 0,
+      "cost": 0.0
+    },
+    "claude": {
+      "input": 0,
+      "output": 0,
+      "cost": 0.0
+    },
+    "gemini": {
+      "input": 0,
+      "output": 0,
+      "cost": 0.0
+    },
+    "grok": {
+      "input": 0,
+      "output": 0,
+      "cost": 0.0
+    }
+  },
+  "polydev_cost": 0.0473,
+  "polydev_insights_length": 11251,
+  "retries": 0,
+  "metrics": {
+    "turns": 94,
+    "cost_usd": 0.06519999999999998,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 545.6,
+    "git_clone_sec": 8.0,
+    "polydev_sec": 69.4,
+    "polydev_success": true,
+    "polydev_models": [
+      "gpt-5.2-codex",
+      "\nFile \"/home/elysium/.local/share/virtualenvs/django-bugfix-O9qARFZW/lib/python3.9/site-packages/django/db/migrations/executor.py\", line 135, in mig\nrate\nstate = self._migrate_all_forwards(\nFile \"/home/elysium/.local/share/virtualenvs/django-bugfix-O9qARFZW/lib/python3.9/site-packages/django/db/migrations/executor.py\", line 167, in _mi\ngrate_all_forwards\nstate = self.apply_migration(\nFile \"/home/elysium/.local/share/virtualenvs/django-bugfix-O9qARFZW/lib/python3.9/site-packages/django/db/migrations/executor.py\", line 252, in app\nly_migration\nstate = migration.apply(state, schema_editor",
+      "Autodetector",
+      "SchemaEditor"
+    ],
+    "polydev_model_tokens": {
+      "gpt-4": {
+        "input": 0,
+        "output": 0,
+        "cost": 0.0
+      },
+      "claude": {
+        "input": 0,
+        "output": 0,
+        "cost": 0.0
+      },
+      "gemini": {
+        "input": 0,
+        "output": 0,
+        "cost": 0.0
+      },
+      "grok": {
+        "input": 0,
+        "output": 0,
+        "cost": 0.0
+      }
+    },
+    "polydev_cost": 0.0473,
+    "claude_sec": 468.1,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 6279,
+  "error": null,
+  "timestamp": "2025-12-26T18:13:23.422536"
+}

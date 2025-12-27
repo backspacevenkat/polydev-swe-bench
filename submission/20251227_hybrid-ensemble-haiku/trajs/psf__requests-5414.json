@@ -1,0 +1,20 @@
+{
+  "instance_id": "psf__requests-5414",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 43,
+    "cost_usd": 0.036007,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 359.4,
+    "git_clone_sec": 2.5,
+    "claude_sec": 356.8,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 1212,
+  "error": null,
+  "timestamp": "2025-12-26T18:19:27.754558"
+}

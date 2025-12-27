@@ -1,0 +1,20 @@
+{
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 1,
+  "metrics": {
+    "turns": 36,
+    "cost_usd": 0.15102899999999997,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 3226.2,
+    "git_clone_sec": 4.4,
+    "claude_sec": 217.6,
+    "retries": 1
+  },
+  "patch_generated": true,
+  "patch_length": 2521,
+  "error": "Timeout after 3000 seconds (attempt 1)",
+  "timestamp": "2025-12-25T23:49:46.056997"
+}

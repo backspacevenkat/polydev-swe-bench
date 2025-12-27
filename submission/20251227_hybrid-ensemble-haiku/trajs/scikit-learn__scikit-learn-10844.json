@@ -1,0 +1,20 @@
+{
+  "instance_id": "scikit-learn__scikit-learn-10844",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 35,
+    "cost_usd": 0.013273000000000002,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 206.6,
+    "git_clone_sec": 4.5,
+    "claude_sec": 202.0,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 627,
+  "error": null,
+  "timestamp": "2025-12-25T23:00:25.328054"
+}

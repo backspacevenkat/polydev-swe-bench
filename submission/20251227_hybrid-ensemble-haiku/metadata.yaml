@@ -1,0 +1,12 @@
+name: "Hybrid Ensemble (Claude Haiku 4.5 + Polydev Multi-Model)"
+oss: true
+date: "2025-12-27"
+verified: false
+trajs: true
+logs: true
+split: "verified"
+model: "claude-haiku-4-5-20251001"
+description: |
+  Hybrid ensemble combining Claude Haiku 4.5 baseline with Polydev multi-model
+  consultation (GPT 5.2 Codex, Gemini 3 Flash). Achieves 74.6% by selecting the
+  best patch from either approach for each instance.

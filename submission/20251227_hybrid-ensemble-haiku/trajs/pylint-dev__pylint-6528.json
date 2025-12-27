@@ -1,0 +1,20 @@
+{
+  "instance_id": "pylint-dev__pylint-6528",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 71,
+    "cost_usd": 0.05507700000000003,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 667.4,
+    "git_clone_sec": 6.1,
+    "claude_sec": 661.3,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 2145,
+  "error": null,
+  "timestamp": "2025-12-26T18:43:59.159260"
+}

@@ -1,0 +1,20 @@
+{
+  "instance_id": "pydata__xarray-6744",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 55,
+    "cost_usd": 0.05648800000000001,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 531.3,
+    "git_clone_sec": 2.9,
+    "claude_sec": 528.3,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 1596,
+  "error": null,
+  "timestamp": "2025-12-26T18:30:24.332541"
+}

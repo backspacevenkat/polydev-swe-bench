@@ -1,0 +1,20 @@
+{
+  "instance_id": "matplotlib__matplotlib-25122",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 31,
+    "cost_usd": 0.023451,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 404.5,
+    "git_clone_sec": 7.7,
+    "claude_sec": 396.3,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 745,
+  "error": null,
+  "timestamp": "2025-12-25T20:44:11.592842"
+}

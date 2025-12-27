@@ -1,0 +1,20 @@
+{
+  "instance_id": "sympy__sympy-11618",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 39,
+    "cost_usd": 0.024815000000000004,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 316.4,
+    "git_clone_sec": 7.1,
+    "claude_sec": 309.3,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 5524,
+  "error": null,
+  "timestamp": "2025-12-26T19:10:03.397251"
+}

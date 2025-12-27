@@ -1,0 +1,83 @@
+{
+  "instance_id": "django__django-13551",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "polydev_used": true,
+  "polydev_success": true,
+  "polydev_models": [
+    "gpt-5.2-codex",
+    "Optional but Recommended",
+    "Positive",
+    "Negative"
+  ],
+  "polydev_model_tokens": {
+    "gpt-4": {
+      "input": 0,
+      "output": 0,
+      "cost": 0.0
+    },
+    "claude": {
+      "input": 0,
+      "output": 0,
+      "cost": 0.0
+    },
+    "gemini": {
+      "input": 0,
+      "output": 0,
+      "cost": 0.0
+    },
+    "grok": {
+      "input": 0,
+      "output": 0,
+      "cost": 0.0
+    }
+  },
+  "polydev_cost": 0.026,
+  "polydev_insights_length": 7969,
+  "retries": 0,
+  "metrics": {
+    "turns": 42,
+    "cost_usd": 0.017534,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 839.8,
+    "git_clone_sec": 16.4,
+    "polydev_sec": 535.8,
+    "polydev_success": true,
+    "polydev_models": [
+      "gpt-5.2-codex",
+      "Optional but Recommended",
+      "Positive",
+      "Negative"
+    ],
+    "polydev_model_tokens": {
+      "gpt-4": {
+        "input": 0,
+        "output": 0,
+        "cost": 0.0
+      },
+      "claude": {
+        "input": 0,
+        "output": 0,
+        "cost": 0.0
+      },
+      "gemini": {
+        "input": 0,
+        "output": 0,
+        "cost": 0.0
+      },
+      "grok": {
+        "input": 0,
+        "output": 0,
+        "cost": 0.0
+      }
+    },
+    "polydev_cost": 0.026,
+    "claude_sec": 287.2,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 3092,
+  "error": null,
+  "timestamp": "2025-12-25T20:13:14.543321"
+}

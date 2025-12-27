@@ -1,0 +1,20 @@
+{
+  "instance_id": "astropy__astropy-14182",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 59,
+    "cost_usd": 0.035028000000000004,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 397.8,
+    "git_clone_sec": 8.5,
+    "claude_sec": 389.3,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 1251,
+  "error": null,
+  "timestamp": "2025-12-26T22:25:55.257172"
+}

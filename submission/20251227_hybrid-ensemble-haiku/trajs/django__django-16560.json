@@ -1,0 +1,20 @@
+{
+  "instance_id": "django__django-16560",
+  "model": "claude-haiku-4-5-20251001",
+  "thinking_tokens": 128000,
+  "retries": 0,
+  "metrics": {
+    "turns": 74,
+    "cost_usd": 0.17247300000000002,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "duration_sec": 452.6,
+    "git_clone_sec": 9.8,
+    "claude_sec": 442.5,
+    "retries": 0
+  },
+  "patch_generated": true,
+  "patch_length": 5922,
+  "error": null,
+  "timestamp": "2025-12-26T17:53:42.039871"
+}
