@@ -182,3 +182,10 @@ scripts/codex_*.py
 scripts/polydev_overnight_run.py
 scripts/start_*.sh
 scripts/swe_bench_codex_*.py
+
+# ============================================
+# Personal/Career documents (private)
+# ============================================
+CAREER_GAME_PLAN.md
+*_GAME_PLAN.md
+EB1A_*.md
