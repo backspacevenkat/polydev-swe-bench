@@ -1,238 +1,155 @@
-# Polydev SWE-bench: Multi-Model Ensemble for Automated Software Engineering
+# Matching Frontier Code Agents with Lightweight Models via Multi-Model Consultation
 
-[![SWE-bench Verified](https://img.shields.io/badge/SWE--bench%20Verified-74.6%25-brightgreen)](https://www.swebench.com/)
+[![SWE-bench Verified](https://img.shields.io/badge/SWE--bench%20Verified-66.6%25%20(single)%20%7C%2074.6%25%20(Resolve@2)-brightgreen)](https://www.swebench.com/)
 [![arXiv](https://img.shields.io/badge/arXiv-2501.XXXXX-b31b1b.svg)](https://arxiv.org/abs/2501.XXXXX)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Publications & Resources
+**Can inference-time compute substitute for model scale?** We demonstrate that Claude Haiku 4.5 (a lightweight model) achieves **66.6% on SWE-bench Verified** as a single policy, and **74.6% Resolve@2 (oracle)** when taking the best of two independent policies—matching Claude 4.5 Opus (74.4%)—when augmented with extended agent turns, large thinking budgets, and multi-model consultation.
 
-| Resource | Link |
-|----------|------|
-| arXiv Paper | [Multi-Model Ensemble for Automated Software Engineering](paper/ARXIV_PAPER.md) |
-| Blog Post | [How We Achieved 74.6% on SWE-bench](paper/BLOG_POST.md) |
-| SWE-bench Submission | [submission/20251227_hybrid-ensemble-haiku/](submission/20251227_hybrid-ensemble-haiku/) |
-| Polydev | [polydev.ai](https://polydev.ai) |
+## Key Results
 
-## 🎯 Key Finding
+| Approach | Resolution Rate | Cost/Resolved |
+|----------|-----------------|---------------|
+| Baseline (Claude Haiku 4.5) | 64.6% | $0.18 |
+| Polydev (+ Multi-Model) | 66.6% | $0.24 |
+| **Resolve@2 (oracle)†** | **74.6%** | **$0.37** |
+| Claude 4.5 Opus (reference) | 74.4% | $0.97 |
 
-**Single-model and multi-model approaches solve DIFFERENT problems.** Combining them in a hybrid ensemble achieves **74.6% pass rate** (373/500) compared to 64.6% for baseline alone—a **15.5% relative improvement**.
+†Resolve@2 (oracle): Best result from two independent Haiku 4.5 policies (baseline + Polydev). This is an upper bound showing complementarity, not a single-policy result.
 
-## Overview
+**Key Finding:** Single-agent and multi-model approaches have only **76% overlap** in solved instances—24% of Resolve@2 successes come from one approach succeeding where the other failed.
 
-This repository contains the implementation and evaluation of a **hybrid ensemble approach** for automated software engineering on the [SWE-bench Verified](https://www.swebench.com/) benchmark. Our approach uses Claude Haiku 4.5 as the base model and optionally consults other models via [Polydev MCP](https://polydev.ai) for alternative perspectives.
-
-## 📊 Results Summary
-
-### Pass Rates (500 Instance Full Evaluation)
-
-| Approach | Pass Rate | Instances Solved | Unique Solves |
-|----------|-----------|------------------|---------------|
-| Baseline (Claude Haiku 4.5) | 64.6% | 323/500 | 40 |
-| Polydev (Multi-Model Consultation) | 66.6% | 333/500 | 50 |
-| **Hybrid Ensemble** | **74.6%** | **373/500** | - |
-
-### Complementarity Analysis
-
-The approaches solve **different** problems (not redundantly):
-
-| Category | Count | Description |
-|----------|-------|-------------|
-| Both solved | 283 | Core overlap - both approaches succeeded |
-| **Baseline only** | 40 | Instances where single-model succeeded but multi-model failed |
-| **Polydev only** | 50 | Instances where multi-model consultation provided the winning insight |
-
-### Cost & Performance Metrics
-
-| Metric | Baseline | Polydev | Hybrid |
-|--------|----------|---------|--------|
-| Total Cost | $46.21 | $63.44 | $109.65 |
-| Total Duration | 102.8 hrs | 149.4 hrs | ~250 hrs |
-| Avg Duration | 555.8s | 819.9s | - |
-| Total Turns | 44,048 | 41,620 | 85,668 |
-| Avg Turns | 66.1 | 63.5 | - |
-| Cost/Resolved | $0.143 | $0.190 | $0.294 |
-
-## 🔬 Methodology
-
-### Base Model Configuration
-- **Model**: Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
-- **Thinking Budget**: 128,000 tokens (Anthropic methodology)
-- **Max Turns**: 250
-- **Prompt**: "Use tools 100+ times, implement tests first"
-
-### Multi-Model Consultation (Polydev)
-- **System**: [Polydev MCP](https://polydev.ai) (configured via dashboard)
-- **Consultation Models**: GPT 5.2 Codex, Gemini 3 Flash Preview
-- **Total Consultations**: 655
-- **Success Rate**: 96.2%
-- **Total Consultation Time**: 53.3 hours
-- **Avg Consultation Time**: 293s
-
-### Hybrid Ensemble Strategy
-
-```
-Problem Statement ─┬─► [Baseline Path] ─► Patch A ─┐
-                   │                               ├─► Test Validation ─► Best Patch
-                   └─► [Polydev Path] ──► Patch B ─┘
-```
-
-## 🚀 Quick Start
-
-### Installation
+## Quick Start
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/backspacevenkat/polydev-swe-bench.git
 cd polydev-swe-bench
-
-# Install dependencies
 pip install -r requirements.txt
 
-# Set up environment variables
-export ANTHROPIC_API_KEY="your-api-key"
-```
+# Set API key
+export ANTHROPIC_API_KEY="your-key"
 
-### Running Evaluations
-
-```bash
-# Quick test (5 instances)
-python scripts/swe_bench_baseline.py --mode test --workers 2
-
-# Validation run (40 instances)
+# Run evaluation (validation set)
 python scripts/swe_bench_baseline.py --mode validation --workers 4
-python scripts/swe_bench_polydev.py --mode validation --workers 4
-
-# Full evaluation (500 instances)
-python scripts/swe_bench_baseline.py --mode full --workers 8
-python scripts/swe_bench_polydev.py --mode full --workers 8
 ```
 
-### Running SWE-bench Evaluation
-
-```bash
-# Install SWE-bench evaluation harness
-pip install swebench
-
-# Run evaluation
-python -m swebench.harness.run_evaluation \
-    -d princeton-nlp/SWE-bench_Verified \
-    -s test \
-    -p results/baseline/all_preds.jsonl \
-    -id baseline-run
-```
-
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 polydev-swe-bench/
-├── README.md                    # This file
-├── PAPER_OUTLINE.md             # Research paper outline
-├── SWE_BENCH_SUBMISSION_GUIDE.md # Leaderboard submission guide
-├── requirements.txt             # Python dependencies
-│
-├── scripts/
-│   ├── swe_bench_baseline.py    # Baseline evaluation script
-│   ├── swe_bench_polydev.py     # Polydev-enhanced evaluation
-│   └── analyze_results.py       # Results analysis
-│
-├── agent_v3/
-│   ├── agent.py                 # Main agent implementation
-│   ├── model.py                 # Claude API wrapper
-│   └── consultation.py          # Polydev consultation logic
-│
-├── results/
-│   ├── baseline/
-│   │   ├── all_preds.jsonl      # Baseline predictions
-│   │   ├── metrics.jsonl        # Per-instance metrics
-│   │   └── trajectories/        # Reasoning traces
-│   └── polydev/
-│       ├── all_preds.jsonl      # Polydev predictions
-│       ├── metrics.jsonl        # Per-instance metrics
-│       └── trajectories/        # Reasoning traces
-│
-├── evaluation/
-│   └── hybrid_ensemble.py       # Hybrid ensemble evaluation
-│
-└── docs/
-    ├── METHODOLOGY.md           # Detailed methodology
-    └── REPRODUCIBILITY.md       # Reproduction instructions
+├── paper/                          # Research paper
+│   ├── arxiv_paper.tex             # Main paper (LaTeX, for arXiv submission)
+│   └── ARXIV_PAPER.md              # Paper in Markdown format (readable)
+├── scripts/                        # Evaluation scripts
+│   ├── swe_bench_baseline.py       # Baseline agent
+│   └── swe_bench_polydev.py        # Polydev-enhanced agent
+├── agent_v3/                       # Agent implementation
+│   ├── agent.py                    # Main agent logic
+│   └── consultation.py             # Multi-model consultation
+├── results/                        # Evaluation results
+│   ├── baseline/                   # Baseline predictions & trajectories
+│   └── polydev/                    # Polydev predictions & trajectories
+├── submission/                     # SWE-bench leaderboard submission
+│   └── 20251227_hybrid-ensemble-haiku/
+│       ├── all_preds.jsonl         # Final predictions
+│       └── trajs/                  # Reasoning trajectories
+└── FINAL_RESULTS.json              # Complete evaluation results
 ```
 
-## 🔄 Reproducibility
+## Methodology
 
-### Experimental Setup
-- **Benchmark**: SWE-bench Verified (500 instances, all evaluated)
-- **Base Model**: Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
-- **Thinking Budget**: 128,000 tokens
-- **Hardware**: macOS (Darwin 24.5.0)
-- **Date**: December 25-27, 2025
-- **Total Evaluation Time**: ~48 hours
+### Inference-Time Compute Dimensions
+
+We identify three dimensions of inference-time investment:
+
+1. **Agent Turns** (up to 250): More iterations for exploration and refinement
+2. **Extended Thinking** (128K tokens): Large reasoning budget per turn
+3. **Model Consultation**: Querying GPT 5.2 Codex and Gemini 3 Flash Preview
+
+### Dual-Policy Evaluation Strategy
+
+```
+Problem Statement ─┬─► [Baseline Path] ─► Patch A ─┐
+                   │   (Haiku alone)               ├─► Test Validation ─► Best Patch
+                   └─► [Polydev Path] ──► Patch B ─┘
+                       (Haiku + MCP)
+```
+
+## When Does Multi-Model Consultation Help?
+
+| Problem Characteristic | Consultation Helpful |
+|------------------------|---------------------|
+| Multi-file changes | 78.2% |
+| Ambiguous requirements | 84.7% |
+| Single-file change | 61.4% |
+| Clear problem statement | 65.2% |
+
+**Takeaway:** Consultation is most valuable for complex, multi-file changes and ambiguous problem statements.
+
+## Complementarity Analysis
+
+| Category | Count | Description |
+|----------|-------|-------------|
+| Both solved | 283 | Core overlap (76%) |
+| **Baseline only** | 40 | Simple fixes where consultation added noise |
+| **Polydev only** | 50 | Complex issues where consultation helped |
+| Neither solved | 127 | Remaining failures |
+
+## Cost Analysis
+
+| Approach | Total Cost | Cost/Instance | Cost/Resolved |
+|----------|------------|---------------|---------------|
+| Baseline only | $57.76 | $0.12 | $0.18 |
+| Polydev only | $78.58 | $0.16 | $0.24 |
+| **Resolve@2 (both)** | **$136.34** | **$0.27** | **$0.37** |
+
+**Note:** Resolve@2 runs two full pipelines. Cost-effective vs. frontier models ($0.97 for Opus) but requires double compute. Effective input rates are lower than list prices due to prompt caching (~90% cache hit rate).
+
+## Reproducibility
+
+### Environment
+- **Benchmark:** SWE-bench Verified (500 instances)
+- **Base Model:** Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+- **Thinking Budget:** 128,000 tokens
+- **Max Turns:** 250
+- **Evaluation Period:** December 25-27, 2025
 
 ### Data Availability
-- **Benchmark**: [SWE-bench Verified](https://huggingface.co/datasets/princeton-nlp/SWE-bench_Verified)
-- **Predictions**: Available in `results/` directory
-- **Trajectories**: Reasoning traces for each instance
-- **Metrics**: Per-instance cost, time, and token usage
+- **Predictions:** `submission/20251227_hybrid-ensemble-haiku/all_preds.jsonl`
+- **Trajectories:** `submission/20251227_hybrid-ensemble-haiku/trajs/`
+- **Metrics:** `results/baseline/metrics.jsonl`, `results/polydev/metrics.jsonl`
 
-### Verification Steps
-1. Clone this repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. Set up API keys
-4. Run: `python scripts/swe_bench_baseline.py --mode validation`
-5. Compare results with `results/baseline/` directory
-
-## 📈 Why Hybrid Ensemble Works
-
-Our analysis reveals that baseline and Polydev solve **different types of problems**:
-
-### Baseline-Only Wins
-| Instance | Why Baseline Was Better |
-|----------|------------------------|
-| `django__django-11532` | Simple fix, extra context added noise |
-| `astropy__astropy-14508` | Straightforward logic fix |
-| `sympy__sympy-15976` | Direct pattern matching |
-
-### Polydev-Only Wins
-| Instance | Why Polydev Helped |
-|----------|-------------------|
-| `sympy__sympy-13031` | Alternative analysis approach |
-| `pylint-dev__pylint-7080` | Multi-perspective identified edge case |
-| `scikit-learn__scikit-learn-25973` | Feature selection insight |
-
-## 📖 Citation
-
-If you use this work, please cite:
+## Citation
 
 ```bibtex
-@article{ghanta2025multimodel,
-  title={Multi-Model Ensemble for Automated Software Engineering:
-         Achieving 74.6\% on SWE-bench Verified},
-  author={Ghanta, Venkata Subrhmanyam},
+@article{ghanta2026matching,
+  title={Matching Frontier Code Agents with Lightweight Models
+         via Multi-Model Consultation},
+  author={Ghanta, Venkata Subrhmanyam and Paladugu, Pujitha Sri Lakshmi},
   journal={arXiv preprint arXiv:2501.XXXXX},
-  year={2025},
+  year={2026},
   url={https://github.com/backspacevenkat/polydev-swe-bench}
 }
 ```
 
-## 👤 Author
+## Authors
 
-**Venkata Subrhmanyam Ghanta**
-- Email: vsghanta@asu.edu
-- Affiliation: Arizona State University & Polydev AI
+- **Venkata Subrhmanyam Ghanta** - Arizona State University & Polydev AI (vsghanta@asu.edu)
+- **Pujitha Sri Lakshmi Paladugu** - Microsoft (pupaladu@microsoft.com)
 
-## 🔗 Related Work
+## Related Work
 
 - [SWE-bench](https://www.swebench.com/) - The benchmark
-- [SWE-agent](https://github.com/princeton-nlp/SWE-agent) - Agent-based approach
-- [Agentless](https://github.com/OpenAutoCoder/Agentless) - Non-agent approach
 - [Polydev](https://polydev.ai) - Multi-model consultation platform
+- [Model Context Protocol](https://modelcontextprotocol.io/) - MCP specification
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Anthropic for Claude API access
 - Princeton NLP for SWE-bench benchmark
-- Polydev team for multi-model consultation platform
+- OpenAI and Google for consultation model APIs

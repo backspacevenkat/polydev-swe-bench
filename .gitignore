@@ -80,8 +80,105 @@ sb-cli/
 
 # Trajectories (too large for git, store separately)
 results/*/trajectories/
+results/*/trajs/
 
 # Keep results structure
 !results/.gitkeep
 !results/baseline/.gitkeep
 !results/polydev/.gitkeep
+
+# ============================================
+# Evaluation artifacts (temporary/intermediate)
+# ============================================
+
+# PDF outputs (generated from LaTeX)
+*.pdf
+
+# Temporary evaluation JSON files
+claude-haiku-*.json
+gpt-*.json
+eval_*.json
+failed_*.json
+haiku.*.json
+polydev_retry_*.json
+retry_instances.json
+submission_*.json
+test_*_ids.json
+validation_*_ids.json
+
+# Temporary JSONL files (evaluation batches)
+baseline-*.jsonl
+polydev-*.jsonl
+retry_*.jsonl
+*-merged.jsonl
+
+# Temporary instance ID lists
+*_instance*.txt
+error_ids_*.txt
+failed_instance_ids.txt
+
+# Intermediate result/status files
+*_EVAL_*.md
+*_REPORT.md
+*_RESULTS.json
+*_SUMMARY.json
+*_STATS.json
+CODEX_EVAL_STATUS.md
+COMPREHENSIVE_EVALUATION_REPORT.md
+EVALUATION_SUMMARY.json
+FINAL_MERGED_RESULTS.json
+PAPER_STATS.json
+
+# One-off build/run scripts
+build_*.py
+complete_all_500.sh
+merge_*.py
+run_*.py
+run_*.sh
+
+# Data cache (large, downloadable from SWE-bench)
+data/
+
+# Experiment tracking logs
+logs/
+
+# ============================================
+# Experiment result folders (reproducible)
+# ============================================
+
+# Keep only baseline/ and polydev/ results, ignore all other experiment folders
+results/codex-*/
+results/mock_test/
+results/parallel*/
+results/quick_test/
+results/real_run/
+results/realistic_eval/
+results/test_single/
+results/v2_*/
+results/v3_*/
+results/validation_*/
+
+# Temporary response caches
+results/*/polydev_responses/
+
+# ============================================
+# Paper planning/marketing documents
+# ============================================
+
+# Keep only arxiv_paper.tex and ARXIV_PAPER.md
+paper/EXPERIMENT_*.md
+paper/MARKETING_*.md
+paper/PAPER_*.md
+paper/POLYDEV_*.md
+paper/RESEARCH_*.md
+paper/*_STRATEGY.md
+
+# ============================================
+# One-off scripts in scripts/
+# ============================================
+
+scripts/check_progress.sh
+scripts/codex_*.py
+scripts/polydev_overnight_run.py
+scripts/start_*.sh
+scripts/swe_bench_codex_*.py

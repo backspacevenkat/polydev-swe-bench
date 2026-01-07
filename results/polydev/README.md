@@ -14,20 +14,20 @@ Anthropic's SWE-bench methodology enhanced with Polydev:
 5. Default sampling parameters
 
 ## Results
-- **Total Instances**: 20
-- **Patches Generated**: 20 (100.0%)
-- **Polydev Calls**: 20
-- **Claude Cost**: $2.32
-- **Polydev Cost**: $0.53
-- **Total Cost**: $2.85
+- **Total Instances**: 52
+- **Patches Generated**: 52 (100.0%)
+- **Polydev Calls**: 52
+- **Claude Cost**: $2.51
+- **Polydev Cost**: $1.40
+- **Total Cost**: $3.91
 - **Total Tokens**: 0
 
 ## Run Details
-- **Run ID**: validation-polydev-20
-- **Date**: 2025-12-25
-- **Duration**: 46 minutes
+- **Run ID**: polydev-retry-52
+- **Date**: 2025-12-27
+- **Duration**: 86 minutes
 
 ## Submission
 ```bash
-sb-cli submit swe-bench_verified test --predictions_path all_preds.jsonl --run_id validation-polydev-20
+sb-cli submit swe-bench_verified test --predictions_path all_preds.jsonl --run_id polydev-retry-52
 ```
